@@ -1,4 +1,3 @@
-當然，我可以為你提供一個針對上述程式碼的 GitHub `README.md` 檔案範例。這個 README 將包括一個簡介、安裝指南、如何使用、以及代碼貢獻的基本指南。
 
 ```markdown
 # Chicken Party 遊戲
