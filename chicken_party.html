@@ -24,6 +24,11 @@
             padding: 10px;
             width: 80%;
         }
+
+        #game-image {
+            max-width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 
@@ -34,6 +39,7 @@
         <input type="number" id="year-input" placeholder="輸入開始年份" min="1990" value=2013>
         <button id="start-button">開始遊戲</button>
         <div id="results"></div>
+        <img id="game-image" src="chicken_party.png" alt="遊戲圖片">
     </div>
 
     <script>
@@ -43,6 +49,7 @@
             let yearsPassed = 0;
 
             const delay = ms => new Promise(res => setTimeout(res, ms));
+            const updateImage = src => document.getElementById('game-image').src = src;
 
             while (people > 0) {
                 results += `年份: ${year}, 參加人數: ${people}<br>`;
@@ -53,14 +60,17 @@
                 if (Math.random() < 0.1 * people) {
                     people--;
                     results += "有人離開了派對。<br>";
+                    updateImage('byebye.png');
                 } else {
                     results += "每個人都留下了。<br>";
+                    updateImage('celebrate.png');
                 }
                 year++;
                 yearsPassed++;
             }
 
             results += `共有${initialPeople}人在${yearsPassed}年內全部離職。`;
+            updateImage('all_eft.png'); // 最後所有人都離職時的圖片
             return results;
         }
 
