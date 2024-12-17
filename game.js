@@ -51,25 +51,7 @@ async function nextMonth() {
 
     if (currentMonth > 12) {
         await endOfYearCheck();
-        if (!gameOver) {
-            year++;
-            yearsPassed++;
-            currentMonth = 1;
-            totalPositiveImpact = 0;
-            totalNegativeImpact = 0;
-
-            yearlyRecords.push({
-                year: year,
-                events: [],
-                endOfYearInfo: {}
-            });
-
-            document.getElementById('results').innerHTML = '';
-            updateTopStatus();
-            updateHappinessBar();
-            nextMonth();
-        }
-        return;
+        return; // 年度結束後，不直接繼續，由玩家點擊「繼續」按鈕繼續
     }
 
     showMonthChoices();
@@ -80,8 +62,8 @@ function showMonthChoices() {
     monthChoiceContainer.innerHTML = `<h2>${year} 年 第 ${currentMonth} 月</h2>`;
 
     let candidates = [...monthlyOptions];
-    let option1 = candidates.splice(Math.floor(Math.random()*candidates.length),1)[0];
-    let option2 = candidates.splice(Math.floor(Math.random()*candidates.length),1)[0];
+    let option1 = candidates.splice(Math.floor(Math.random() * candidates.length), 1)[0];
+    let option2 = candidates.splice(Math.floor(Math.random() * candidates.length), 1)[0];
 
     monthChoiceContainer.innerHTML += `
         <div class="choices-wrapper">
@@ -123,34 +105,37 @@ async function endOfYearCheck() {
     const resultsDiv = document.getElementById('results');
     resultsDiv.innerHTML += `<br>=== ${year}年底舉辦chicken party ===<br>`;
 
-    let baseRate = baseRate = 0.05 + (yearsPassed * 0.05);
+    let baseRate = 0.05 + (yearsPassed * 0.05);
     let negFactor = (0.5 * (totalNegativeImpact / 12));
     let posFactor = (0.3 * (totalPositiveImpact / 12));
     let turnoverRate = baseRate + negFactor - posFactor;
-    if (turnoverRate < 0.05) { 
-        turnoverRate = 0.05; 
+    if (turnoverRate < 0.05) {
+        turnoverRate = 0.05;
     }
 
+    // 每年最多只能離職一人
     let leftThisYear = 0;
     let leaveDetails = [];
 
     for (let i = 0; i < people; i++) {
         if (Math.random() < turnoverRate) {
-            leftThisYear++;
-            let reason = leaveReasons[Math.floor(Math.random()*leaveReasons.length)];
+            leftThisYear = 1; // 有人離職
+            let reason = leaveReasons[Math.floor(Math.random() * leaveReasons.length)];
             leaveDetails.push(reason);
+            break; // 離職一人後立刻停止
         }
     }
 
     if (leftThisYear > 0) {
-        people -= leftThisYear;
+        people -= 1; // 只減少一人
         for (let reason of leaveDetails) {
             resultsDiv.innerHTML += `有一名員工離職，原因：${reason}<br>`;
-            updateImage('image/byebye.png');
-            await delay(50);
         }
+        // 有人離職顯示 byebye.png
+        updateImage('image/byebye.png');
     } else {
         resultsDiv.innerHTML += `所有人留下了！<br>`;
+        // 無人離職顯示 celebrate.png
         updateImage('image/celebrate.png');
     }
 
@@ -164,15 +149,37 @@ async function endOfYearCheck() {
         turnoverRate: turnoverRate
     };
 
-    // 短暫顯示當年結果圖片
-    updateImage('image/year_end_summary.png');
-    await delay(3000); // 暫停1秒顯示年度結果圖片
+    // 年度結束後不繼續下一年，顯示一個「繼續」按鈕
+    // 清空 month-choices 並顯示繼續按鈕
+    const monthChoiceContainer = document.getElementById('month-choices');
+    monthChoiceContainer.innerHTML = `<button class="choice-button" onclick="continueToNextYear()">繼續</button>`;
+}
+
+function continueToNextYear() {
+    if (gameOver) return;
 
     if (people <= 0) {
         endGame();
-    } else {
-        updateTopStatus();
+        return;
     }
+
+    // 開始下一年
+    year++;
+    yearsPassed++;
+    currentMonth = 1;
+    totalPositiveImpact = 0;
+    totalNegativeImpact = 0;
+
+    yearlyRecords.push({
+        year: year,
+        events: [],
+        endOfYearInfo: {}
+    });
+
+    document.getElementById('results').innerHTML = '';
+    updateTopStatus();
+    updateHappinessBar();
+    nextMonth();
 }
 
 function endGame() {
