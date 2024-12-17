@@ -51,7 +51,25 @@ async function nextMonth() {
 
     if (currentMonth > 12) {
         await endOfYearCheck();
-        return; // 年度結束後，不直接繼續，由玩家點擊「繼續」按鈕繼續
+        if (!gameOver) {
+            year++;
+            yearsPassed++;
+            currentMonth = 1;
+            totalPositiveImpact = 0;
+            totalNegativeImpact = 0;
+
+            yearlyRecords.push({
+                year: year,
+                events: [],
+                endOfYearInfo: {}
+            });
+
+            document.getElementById('results').innerHTML = '';
+            updateTopStatus();
+            updateHappinessBar();
+            nextMonth();
+        }
+        return;
     }
 
     showMonthChoices();
@@ -113,29 +131,26 @@ async function endOfYearCheck() {
         turnoverRate = 0.05; 
     }
 
-    // 每年最多只能離職一人
     let leftThisYear = 0;
     let leaveDetails = [];
 
     for (let i = 0; i < people; i++) {
         if (Math.random() < turnoverRate) {
-            leftThisYear = 1; // 有人離職
+            leftThisYear++;
             let reason = leaveReasons[Math.floor(Math.random()*leaveReasons.length)];
             leaveDetails.push(reason);
-            break; // 離職一人後立刻停止
         }
     }
 
     if (leftThisYear > 0) {
-        people -= 1; // 只減少一人
+        people -= leftThisYear;
         for (let reason of leaveDetails) {
             resultsDiv.innerHTML += `有一名員工離職，原因：${reason}<br>`;
+            updateImage('image/byebye.png');
+            await delay(50);
         }
-        // 有人離職顯示 byebye.png
-        updateImage('image/byebye.png');
     } else {
         resultsDiv.innerHTML += `所有人留下了！<br>`;
-        // 無人離職顯示 celebrate.png
         updateImage('image/celebrate.png');
     }
 
@@ -149,37 +164,15 @@ async function endOfYearCheck() {
         turnoverRate: turnoverRate
     };
 
-    // 年度結束後不繼續下一年，顯示一個「繼續」按鈕
-    // 清空 month-choices 並顯示繼續按鈕
-    const monthChoiceContainer = document.getElementById('month-choices');
-    monthChoiceContainer.innerHTML = `<button class="choice-button" onclick="continueToNextYear()">繼續</button>`;
-}
-
-function continueToNextYear() {
-    if (gameOver) return;
+    // 短暫顯示當年結果圖片
+    updateImage('image/year_end_summary.png');
+    await delay(3000); // 暫停1秒顯示年度結果圖片
 
     if (people <= 0) {
         endGame();
-        return;
+    } else {
+        updateTopStatus();
     }
-
-    // 開始下一年
-    year++;
-    yearsPassed++;
-    currentMonth = 1;
-    totalPositiveImpact = 0;
-    totalNegativeImpact = 0;
-
-    yearlyRecords.push({
-        year: year,
-        events: [],
-        endOfYearInfo: {}
-    });
-
-    document.getElementById('results').innerHTML = '';
-    updateTopStatus();
-    updateHappinessBar();
-    nextMonth();
 }
 
 function endGame() {
