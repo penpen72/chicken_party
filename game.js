@@ -105,7 +105,7 @@ async function endOfYearCheck() {
     const resultsDiv = document.getElementById('results');
     resultsDiv.innerHTML += `<br>=== ${year}年底舉辦chicken party ===<br>`;
 
-    let baseRate = 0.05; 
+    let baseRate = baseRate = 0.05 + (yearsPassed * 0.05);
     let negFactor = (0.5 * (totalNegativeImpact / 12));
     let posFactor = (0.3 * (totalPositiveImpact / 12));
     let turnoverRate = baseRate + negFactor - posFactor;
