@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>Chicken Party 遊戲</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="game-container">
+        <h1>Chicken Party 遊戲</h1>
+
+        <!-- 新增頂部狀態顯示區域 -->
+        <div id="top-status">
+            <p id="top-year"></p>
+            <p id="top-people"></p>
+            <p id="top-years-passed"></p>
+        </div>
+
+        <div id="start-container">
+            <input type="number" id="people-input" placeholder="輸入人數" min="1" value="5">
+            <input type="number" id="year-input" placeholder="輸入開始年份" min="1990" value="2013">
+            <button id="start-button">開始遊戲</button>
+        </div>
+
+        <div id="month-choices"></div>
+        <div id="results"></div>
+
+        <div class="progress-container" id="happiness-container">
+            <label>年度幸福度狀態</label>
+            <progress id="happiness-progress" value="0" max="100"></progress>
+        </div>
+
+        <!-- 將下方狀態區塊移除，因為已經有 top-status -->
+        <img id="game-image" src="image/chicken_party.png" alt="遊戲圖片">
+
+        <div id="final-summary" class="hidden"></div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="game.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

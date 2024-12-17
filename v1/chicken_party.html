@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chicken Party 遊戲</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            margin:0;
+            background: #f9f9f9;
+        }
+
+        #game-container {
+            margin: auto;
+            max-width: 90%;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+        }
+
+        h1, h2, h3, h4 {
+            margin: 0.5em 0;
+        }
+
+        input,
+        button {
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+
+        #start-container {
+            margin-bottom: 20px;
+        }
+
+        #month-choices {
+            margin: 20px 0;
+        }
+
+        .choice-button {
+            margin: 10px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        #results, #status, #final-summary {
+            margin-top: 20px;
+            text-align: left;
+            background: #fafafa;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 20px;
+        }
+
+        .progress-container {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .progress-container label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        progress {
+            width: 100%;
+            height: 20px;
+        }
+
+        #game-image {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+            display:block;
+            margin-left:auto;
+            margin-right:auto;
+        }
+
+        /* 在結束時隱藏部分區塊 */
+        .hidden {
+            display: none;
+        }
+
+        @media screen and (min-width: 600px) {
+            #game-container {
+                max-width: 600px;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+    <div id="game-container">
+        <h1>Chicken Party 遊戲</h1>
+        <div id="start-container">
+            <input type="number" id="people-input" placeholder="輸入人數" min="1" value="5">
+            <input type="number" id="year-input" placeholder="輸入開始年份" min="1990" value="2013">
+            <button id="start-button">開始遊戲</button>
+        </div>
+
+        <div id="month-choices"></div>
+        <div id="results"></div>
+
+        <div class="progress-container" id="happiness-container">
+            <label>年度幸福度狀態</label>
+            <progress id="happiness-progress" value="0" max="100"></progress>
+        </div>
+
+        <div id="status"></div>
+        <img id="game-image" src="chicken_party.png" alt="遊戲圖片">
+
+        <div id="final-summary" class="hidden"></div>
+    </div>
+
+    <script>
+        // 20個可能選項（移除顯示數值的標示）
+        const monthlyOptions = [
+            {id:1, text:"舉辦免費下午茶", happinessImpact:+2},
+            {id:2, text:"加班一次(無補休)", happinessImpact:-3},
+            {id:3, text:"團隊建築課程", happinessImpact:+3},
+            {id:4, text:"高層演講會議", happinessImpact:-1},
+            {id:5, text:"發放小額獎金", happinessImpact:+2},
+            {id:6, text:"新制度實施(增加工作流程)", happinessImpact:-2},
+            {id:7, text:"公司郊遊日", happinessImpact:+4},
+            {id:8, text:"延後薪資發放", happinessImpact:-4},
+            {id:9, text:"生日慶祝派對", happinessImpact:+3},
+            {id:10, text:"部門間競賽(輸家被懲罰)", happinessImpact:-2},
+            {id:11, text:"免費健康檢查", happinessImpact:+2},
+            {id:12, text:"禁止私人上網(嚴格管制)", happinessImpact:-3},
+            {id:13, text:"員工意見箱(定期反饋)", happinessImpact:+1},
+            {id:14, text:"減少年終獎金", happinessImpact:-3},
+            {id:15, text:"提供員工家庭日", happinessImpact:+3},
+            {id:16, text:"團隊閱讀分享會", happinessImpact:+1},
+            {id:17, text:"無預警加班", happinessImpact:-2},
+            {id:18, text:"員工健身房補助", happinessImpact:+2},
+            {id:19, text:"調整座位(提升舒適度)", happinessImpact:+1},
+            {id:20, text:"嚴格績效考核(壓力提升)", happinessImpact:-1}
+        ];
+
+        // 離職理由（10種）
+        const leaveReasons = [
+            "公司文化不合",
+            "工時過長沒有彈性",
+            "福利不足",
+            "沒有發展空間",
+            "薪資水平低於市場",
+            "管理階層決策不透明",
+            "辦公環境不佳",
+            "缺乏團隊合作的氛圍",
+            "過多的文書作業",
+            "缺乏休閒娛樂活動"
+        ];
+
+        let people, year;
+        let initialPeople;
+        let currentMonth = 1;
+        let yearsPassed = 0;
+        let gameOver = false;
+
+        // 年度幸福度累積
+        let totalPositiveImpact = 0;
+        let totalNegativeImpact = 0;
+
+        // 各年度事件記錄
+        let yearlyRecords = [];
+
+        const delay = ms => new Promise(res => setTimeout(res, ms));
+        const updateImage = src => document.getElementById('game-image').src = src;
+
+        document.getElementById('start-button').addEventListener('click', startGame);
+
+        async function startGame() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('status').innerHTML = '';
+            document.getElementById('final-summary').classList.add('hidden');
+            document.getElementById('final-summary').innerHTML = '';
+
+            people = parseInt(document.getElementById('people-input').value);
+            year = parseInt(document.getElementById('year-input').value);
+            initialPeople = people;
+            currentMonth = 1;
+            yearsPassed = 0;
+            totalPositiveImpact = 0;
+            totalNegativeImpact = 0;
+            gameOver = false;
+            yearlyRecords = [];
+
+            document.getElementById('start-container').style.display = 'none'; // 隱藏開始輸入
+
+            yearlyRecords.push({
+                year: year,
+                events: [],
+                endOfYearInfo: {}
+            });
+
+            updateStatus();
+            updateHappinessBar();
+            await nextMonth();
+        }
+
+        async function nextMonth() {
+            if (gameOver) return;
+
+            if (people <= 0) {
+                endGame();
+                return;
+            }
+
+            if (currentMonth > 12) {
+                // 年底舉辦chicken party
+                await endOfYearCheck();
+                if (!gameOver) {
+                    year++;
+                    yearsPassed++;
+                    currentMonth = 1;
+                    totalPositiveImpact = 0;
+                    totalNegativeImpact = 0;
+
+                    yearlyRecords.push({
+                        year: year,
+                        events: [],
+                        endOfYearInfo: {}
+                    });
+
+                    // 清除該年的顯示以便更新
+                    document.getElementById('results').innerHTML = '';
+                    updateStatus();
+                    updateHappinessBar();
+                    await nextMonth();
+                }
+                return;
+            }
+
+            showMonthChoices();
+        }
+
+        function showMonthChoices() {
+            const monthChoiceContainer = document.getElementById('month-choices');
+            monthChoiceContainer.innerHTML = `<h2>${year} 年 第 ${currentMonth} 月</h2>`;
+
+            // 隨機抽出2個選項
+            let candidates = [...monthlyOptions];
+            let option1 = candidates.splice(Math.floor(Math.random()*candidates.length),1)[0];
+            let option2 = candidates.splice(Math.floor(Math.random()*candidates.length),1)[0];
+
+            // 不顯示影響值給玩家，只顯示純文字描述
+            monthChoiceContainer.innerHTML += `
+                <div>
+                    <button class="choice-button" onclick="chooseOption(${option1.id}, ${option1.happinessImpact})">${option1.text}</button>
+                    <button class="choice-button" onclick="chooseOption(${option2.id}, ${option2.happinessImpact})">${option2.text}</button>
+                </div>
+            `;
+        }
+
+        function chooseOption(id, impact) {
+            if (impact > 0) {
+                totalPositiveImpact += impact;
+            } else {
+                totalNegativeImpact += Math.abs(impact);
+            }
+
+            const chosenOption = monthlyOptions.find(o => o.id === id);
+
+            let thisYearRecord = yearlyRecords.find(r => r.year === year);
+            thisYearRecord.events.push({
+                month: currentMonth,
+                choiceText: chosenOption.text,
+                impact: impact
+            });
+
+            document.getElementById('results').innerHTML += `${year}年${currentMonth}月：選擇了「${chosenOption.text}」<br>`;
+
+            currentMonth++;
+            updateHappinessBar();
+            updateStatus();
+            nextMonth();
+        }
+
+        async function endOfYearCheck() {
+            document.getElementById('results').innerHTML += `<br>=== ${year}年底舉辦chicken party ===<br>`;
+
+            let baseRate = 0.05; 
+            let negFactor = (0.5 * (totalNegativeImpact / 12));
+            let posFactor = (0.3 * (totalPositiveImpact / 12));
+            let turnoverRate = baseRate + negFactor - posFactor;
+            if (turnoverRate < 0.05) { 
+                turnoverRate = 0.05; 
+            }
+
+            let leftThisYear = 0;
+            let leaveDetails = [];
+
+            for (let i = 0; i < people; i++) {
+                if (Math.random() < turnoverRate) {
+                    leftThisYear++;
+                    let reason = leaveReasons[Math.floor(Math.random()*leaveReasons.length)];
+                    leaveDetails.push(reason);
+                }
+            }
+
+            if (leftThisYear > 0) {
+                people -= leftThisYear;
+                for (let reason of leaveDetails) {
+                    document.getElementById('results').innerHTML += `有一名員工離職，原因：${reason}<br>`;
+                    updateImage('byebye.png');
+                    await delay(50);
+                }
+            } else {
+                document.getElementById('results').innerHTML += `所有人留下了！<br>`;
+                updateImage('celebrate.png');
+            }
+
+            document.getElementById('results').innerHTML += `<br>${year}年底後剩餘人數：${people}<br><br>`;
+
+            let thisYearRecord = yearlyRecords.find(r => r.year === year);
+            thisYearRecord.endOfYearInfo = {
+                leftCount: leftThisYear,
+                leaveReasons: leaveDetails,
+                remainingPeople: people,
+                turnoverRate: turnoverRate
+            };
+
+            if (people <= 0) {
+                endGame();
+            } else {
+                updateStatus();
+            }
+        }
+
+        function endGame() {
+            gameOver = true;
+            updateImage('all_left.png');
+
+            // 隱藏遊戲中區塊
+            document.getElementById('month-choices').classList.add('hidden');
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('status').classList.add('hidden');
+            document.getElementById('happiness-container').classList.add('hidden');
+
+            // 整理最終報告
+            let finalSummary = "<h2>遊戲總結</h2>";
+            finalSummary += `<p>初始人數：${initialPeople}</p>`;
+            finalSummary += `<p>共經過了 ${yearsPassed} 年，所有員工已全部離開。</p>`;
+            finalSummary += `<h3>事件紀錄</h3>`;
+            for (let record of yearlyRecords) {
+                finalSummary += `<h4>${record.year} 年度</h4>`;
+                if (record.events && record.events.length > 0) {
+                    finalSummary += "<ul>";
+                    for (let e of record.events) {
+                        finalSummary += `<li>${e.month}月：${e.choiceText}</li>`;
+                    }
+                    finalSummary += "</ul>";
+                }
+                if (record.endOfYearInfo && record.endOfYearInfo.remainingPeople !== undefined) {
+                    finalSummary += `<p>年底離職數：${record.endOfYearInfo.leftCount}</p>`;
+                    if (record.endOfYearInfo.leaveReasons && record.endOfYearInfo.leaveReasons.length > 0) {
+                        finalSummary += `<p>離職原因：${record.endOfYearInfo.leaveReasons.join("、")}</p>`;
+                    } else {
+                        finalSummary += `<p>無人離職</p>`;
+                    }
+                    finalSummary += `<p>年底剩餘人數：${record.endOfYearInfo.remainingPeople}</p>`;
+                }
+            }
+
+            finalSummary += `<button onclick="restartGame()">重新開始</button>`;
+
+            let finalDiv = document.getElementById('final-summary');
+            finalDiv.innerHTML = finalSummary;
+            finalDiv.classList.remove('hidden');
+        }
+
+        function restartGame() {
+            // 重置界面顯示
+            document.getElementById('final-summary').classList.add('hidden');
+            document.getElementById('final-summary').innerHTML = '';
+            document.getElementById('month-choices').classList.remove('hidden');
+            document.getElementById('results').classList.remove('hidden');
+            document.getElementById('status').classList.remove('hidden');
+            document.getElementById('happiness-container').classList.remove('hidden');
+            document.getElementById('start-container').style.display = 'block';
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('status').innerHTML = '';
+            document.getElementById('game-image').src = "chicken_party.png";
+        }
+
+        function updateHappinessBar() {
+            let netHappiness = totalPositiveImpact - totalNegativeImpact;
+            let mappedValue = (netHappiness + 50);
+            if (mappedValue < 0) mappedValue = 0;
+            if (mappedValue > 100) mappedValue = 100;
+            document.getElementById('happiness-progress').value = mappedValue;
+        }
+
+        function updateStatus() {
+            document.getElementById('status').innerHTML = `
+                <p>目前年份：${year}</p>
+                <p>目前人數：${people}</p>
+                <p>累計進行年數：${yearsPassed}</p>
+            `;
+        }
+
+    </script>
+</body>
+
+</html>
