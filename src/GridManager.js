@@ -55,4 +55,37 @@ class GridManager {
     getAllUnits() {
         return this.units;
     }
+
+    getNeighbors(x, y, range = 1) {
+        const neighbors = [];
+        for (let dy = -range; dy <= range; dy++) {
+            for (let dx = -range; dx <= range; dx++) {
+                if (dx === 0 && dy === 0) continue;
+                const nx = x + dx;
+                const ny = y + dy;
+                if (this.isValid(nx, ny)) {
+                    const unit = this.getUnitAt(nx, ny);
+                    if (unit) {
+                        neighbors.push(unit);
+                    }
+                }
+            }
+        }
+        return neighbors;
+    }
+
+    getNeighborCount(x, y, range = 1) {
+        let count = 0;
+        for (let dy = -range; dy <= range; dy++) {
+            for (let dx = -range; dx <= range; dx++) {
+                if (dx === 0 && dy === 0) continue;
+                const nx = x + dx;
+                const ny = y + dy;
+                if (this.isValid(nx, ny) && this.isOccupied(nx, ny)) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
 }

@@ -7,8 +7,9 @@ class UIManager {
         this.dayDisplay = document.getElementById('day-display');
         this.progressBar = document.getElementById('time-progress-bar');
         this.cashDisplay = document.getElementById('cash-display');
-        this.foundersDisplay = document.getElementById('founders-display');
-        this.techDisplay = document.getElementById('tech-display');
+        this.hpDisplay = document.getElementById('hp-display');
+        this.rdDisplay = document.getElementById('rd-display');
+        this.salesDisplay = document.getElementById('sales-display');
         this.welfareDisplay = document.getElementById('welfare-display');
 
         this.modal = document.getElementById('event-modal');
@@ -78,17 +79,43 @@ class UIManager {
                 this.onModalClose = null;
             }
         });
+
+        // Settings Toggles
+        this.btnProduction = document.getElementById('btn-toggle-production');
+        this.btnBuffs = document.getElementById('btn-toggle-buffs');
+
+        this.btnProduction.addEventListener('click', () => {
+            this.game.settings.showProduction = !this.game.settings.showProduction;
+            this.updateToggleState(this.btnProduction, this.game.settings.showProduction);
+        });
+
+        this.btnBuffs.addEventListener('click', () => {
+            this.game.settings.showBuffs = !this.game.settings.showBuffs;
+            this.updateToggleState(this.btnBuffs, this.game.settings.showBuffs);
+        });
     }
 
-    updateUI(kpis, year, day, founders) {
+    updateToggleState(btn, isActive) {
+        if (isActive) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    }
+
+    updateUI(kpis, year, day, hp) {
         this.yearDisplay.textContent = year;
         this.dayDisplay.textContent = `Day ${day}`;
         const progress = (day / 365) * 100;
         this.progressBar.style.width = `${progress}%`;
 
         this.cashDisplay.textContent = Math.floor(kpis.cash);
-        this.foundersDisplay.textContent = founders;
-        this.techDisplay.textContent = Math.floor(kpis.tech);
+        if (this.hpDisplay) this.hpDisplay.textContent = hp;
+
+        // Update R&D (Stock) and Sales (Capacity)
+        if (this.rdDisplay) this.rdDisplay.textContent = Math.floor(kpis.tech); // Display Stock
+        if (this.salesDisplay) this.salesDisplay.textContent = Math.floor(kpis.sales_power);
+
         this.welfareDisplay.textContent = Math.floor(kpis.welfare);
     }
 
@@ -110,9 +137,10 @@ class UIManager {
         // Build Stats HTML
         let statsHtml = '';
         if (def.stats.cost > 0) statsHtml += `<div class="stat-row"><span class="stat-label">Run Cost:</span><span class="stat-value">-$${def.stats.cost}/day</span></div>`;
-        if (def.stats.tech > 0) statsHtml += `<div class="stat-row"><span class="stat-label">Tech:</span><span class="stat-value">+${def.stats.tech}</span></div>`;
+        if (def.stats.rd > 0) statsHtml += `<div class="stat-row"><span class="stat-label">R&D Power:</span><span class="stat-value">+${def.stats.rd}</span></div>`;
+        if (def.stats.sales > 0) statsHtml += `<div class="stat-row"><span class="stat-label">Sales Power:</span><span class="stat-value">+${def.stats.sales}</span></div>`;
         if (def.stats.rep > 0) statsHtml += `<div class="stat-row"><span class="stat-label">Reputation:</span><span class="stat-value">+${def.stats.rep}</span></div>`;
-        if (def.stats.welfare > 0) statsHtml += `<div class="stat-row"><span class="stat-label">Welfare:</span><span class="stat-value">+${def.stats.welfare}</span></div>`;
+        if (def.stats.welfare !== 0) statsHtml += `<div class="stat-row"><span class="stat-label">Happiness:</span><span class="stat-value">${def.stats.welfare > 0 ? '+' : ''}${def.stats.welfare}</span></div>`;
 
         this.unitStats.innerHTML = statsHtml;
         this.unitInfoPanel.classList.remove('hidden');
@@ -137,14 +165,17 @@ class UIManager {
         if (def.stats.cost > 0) {
             statsHtml += `<div class="stat-row"><span class="stat-label">💸 Operating Cost:</span><span class="stat-value">-$${def.stats.cost}/day</span></div>`;
         }
-        if (def.stats.tech > 0) {
-            statsHtml += `<div class="stat-row"><span class="stat-label">🔬 Tech Gain:</span><span class="stat-value">+${def.stats.tech}/day</span></div>`;
+        if (def.stats.rd > 0) {
+            statsHtml += `<div class="stat-row"><span class="stat-label">🔬 R&D Power:</span><span class="stat-value">+${def.stats.rd}/day</span></div>`;
+        }
+        if (def.stats.sales > 0) {
+            statsHtml += `<div class="stat-row"><span class="stat-label">📢 Sales Power:</span><span class="stat-value">+${def.stats.sales}/day</span></div>`;
         }
         if (def.stats.rep > 0) {
             statsHtml += `<div class="stat-row"><span class="stat-label">📢 Reputation:</span><span class="stat-value">+${def.stats.rep}/day</span></div>`;
         }
-        if (def.stats.welfare > 0) {
-            statsHtml += `<div class="stat-row"><span class="stat-label">❤️ Welfare:</span><span class="stat-value">+${def.stats.welfare}/day</span></div>`;
+        if (def.stats.welfare !== 0) {
+            statsHtml += `<div class="stat-row"><span class="stat-label">❤️ Happiness:</span><span class="stat-value">${def.stats.welfare > 0 ? '+' : ''}${def.stats.welfare}</span></div>`;
         }
 
         this.previewStats.innerHTML = statsHtml;

@@ -5,11 +5,10 @@ class Game {
         this.isGameOver = false;
 
         // Game State
-        this.year = 2013;
+        this.year = 2015;
         this.day = 1; // 1-365
         this.lastEventDay = 1;
-        this.foundingMembers = 5;
-        this.stress = 0; // Accumulated Stress for the year
+        this.annualProfit = 0; // Track profit for the year
 
         // Visual Tick Timer
         this.visualTickTimer = 0;
@@ -26,6 +25,12 @@ class Game {
         // Interaction State
         this.selectedBuildType = null;
         this.isDeleteMode = false;
+
+        // Settings
+        this.settings = {
+            showProduction: true,
+            showBuffs: true
+        };
     }
 
     start() {
@@ -49,69 +54,106 @@ class Game {
         this.lastTime = timestamp;
 
         // 1. Update Resources
-        this.resourceManager.calculateFlows(this.gridManager.getAllUnits());
-        this.resourceManager.updateWelfare(this.gridManager.getAllUnits());
+        // Pass gridManager to calculate neighbors/crowding
+        this.resourceManager.calculateFlows(this.gridManager);
         this.resourceManager.tick(deltaTime);
 
+        // Track Annual Profit
+        this.annualProfit += this.resourceManager.flows.cash * deltaTime;
+
         // 2. Update Time
-        // DEBUG: 10 real seconds = 1 game day
+        // 1 real second = 1 game day
         this.day += deltaTime * 1;
+
+        // Daily Settlement (Integer day change)
+        if (Math.floor(this.day) > Math.floor(this.day - deltaTime)) {
+            this.checkDailyEvent();
+        }
+
         if (this.day >= 365) {
             this.day = 1;
-            this.lastEventDay = 1;
             this.triggerChickenParty();
         }
 
-        // Check for Random Events (Every 30 days)
-        if (this.day - this.lastEventDay >= 30) {
-            this.lastEventDay = this.day;
-            this.eventManager.tryTriggerEvent();
-        }
-
-        // 3. Update Stress (Based on Welfare)
-        const stressGain = Math.max(0, (5 - this.resourceManager.kpis.welfare * 0.1) * deltaTime);
-        this.stress += stressGain;
-
-        // 4. Visual Tick (Floating Text)
+        // 3. Visual Tick (Floating Text)
         this.visualTickTimer += deltaTime;
         if (this.visualTickTimer >= this.visualTickInterval) {
             this.visualTickTimer = 0;
             this.triggerVisualEffects();
         }
 
-        // 5. Update Visuals
+        // 4. Update Visuals
         this.sceneManager.update(deltaTime);
         this.sceneManager.render();
 
-        // 6. Update UI
-        this.uiManager.updateUI(this.resourceManager.kpis, this.year, Math.floor(this.day), this.foundingMembers);
+        // Update Unit Visuals (Zombie Mode)
+        const units = this.gridManager.getAllUnits();
+        this.sceneManager.updateUnitVisuals(units);
 
-        // Check Game Over (No Founders)
-        if (this.foundingMembers <= 0) {
-            this.triggerGameOver("All founding members have left.");
+        // 5. Update UI
+        this.uiManager.updateUI(this.resourceManager.kpis, this.year, Math.floor(this.day), this.resourceManager.kpis.hp);
+
+        // Check Game Over
+        if (this.resourceManager.kpis.hp <= 0) {
+            this.triggerGameOver("The last partner has left. The party is over.");
+        }
+        if (this.resourceManager.kpis.cash <= 0) {
+            this.triggerGameOver("Bankruptcy! You have run out of funds.");
         }
 
         requestAnimationFrame((t) => this.loop(t));
     }
 
+    checkDailyEvent() {
+        // Daily storytelling or minor effects
+        // For now, just log or update UI notification?
+        // Design says: "System generates daily comment based on Net Profit & Happiness"
+
+        const profit = this.resourceManager.flows.cash;
+        const happiness = this.resourceManager.kpis.welfare;
+
+        let message = "";
+        if (profit > 0 && happiness > 80) message = "Dream Team! Everyone is happy and rich.";
+        else if (profit > 0 && happiness < 40) message = "Sweatshop: Making money, but at what cost?";
+        else if (profit < 0 && happiness > 80) message = "Paradise: Burning cash to keep everyone happy.";
+        else if (profit < 0 && happiness < 40) message = "Crisis: Bleeding money and morale.";
+
+        // Update UI notification (if exists)
+        // this.uiManager.showNotification(message);
+    }
+
     triggerVisualEffects() {
         const units = this.gridManager.getAllUnits();
         units.forEach(unit => {
-            const stats = this.resourceManager.unitStats[unit.type];
-            if (!stats) return;
+            const def = this.resourceManager.unitDefinitions[unit.type];
+            if (!def) return;
 
-            // Spawn text based on stats
-            if (stats.cost > 0) {
-                this.sceneManager.spawnFloatingText(unit, `💸 -$${stats.cost} `, '#ef4444');
+            // Zombie (Always show)
+            if (unit.runtime && unit.runtime.isZombie) {
+                this.sceneManager.spawnFloatingText(unit, "Zzz...", '#888888');
+                return;
             }
-            if (stats.tech > 0) {
-                setTimeout(() => this.sceneManager.spawnFloatingText(unit, `🔬 +Tech`, '#3b82f6'), 300);
+
+            // Buffs/Debuffs
+            if (this.settings.showBuffs && unit.runtime) {
+                if (unit.runtime.efficiency > 1.1) {
+                    this.sceneManager.spawnFloatingText(unit, "Boost!", '#fbbf24'); // Amber
+                } else if (unit.runtime.happiness < 40) {
+                    this.sceneManager.spawnFloatingText(unit, "Stress...", '#ef4444'); // Red
+                }
             }
-            if (stats.rep > 0) {
-                setTimeout(() => this.sceneManager.spawnFloatingText(unit, `📢 +Rep`, '#f97316'), 600);
-            }
-            if (stats.welfare > 0) {
-                setTimeout(() => this.sceneManager.spawnFloatingText(unit, `❤️ +Welfare`, '#eab308'), 900);
+
+            // Production
+            if (this.settings.showProduction) {
+                if (def.stats.cost > 0) {
+                    // this.sceneManager.spawnFloatingText(unit, `-$`, '#ef4444');
+                }
+                if (def.stats.rd > 0) {
+                    this.sceneManager.spawnFloatingText(unit, `+R&D`, '#3b82f6');
+                }
+                if (def.stats.sales > 0) {
+                    this.sceneManager.spawnFloatingText(unit, `+Sales`, '#10b981');
+                }
             }
         });
     }
@@ -163,38 +205,46 @@ class Game {
         this.isPlaying = false; // Pause loop
         this.soundManager.playEventSound();
 
-        // Calculate Departure
-        const stressFactor = this.stress / 100;
-        const welfareFactor = this.resourceManager.kpis.welfare / 10;
-        const repFactor = this.resourceManager.kpis.reputation / 100;
+        // Annual Settlement
+        // Check 1: Profit
+        const isProfitable = this.annualProfit > 0;
+        // Check 2: Happiness
+        const isHappy = this.resourceManager.kpis.welfare >= 50;
+        // Check 3: KPI Growth (Tech) - Simplified to just Tech > 0 or something?
+        // Design says: "KPI Zero Growth -> HP -1"
+        // Let's assume "Tech" is the KPI.
 
-        let probability = 5 + stressFactor - welfareFactor - repFactor;
-        if (probability < 1) probability = 1;
-        if (probability > 100) probability = 100;
+        let hpLoss = 0;
+        let reasons = [];
 
-        let leftCount = 0;
-        for (let i = 0; i < this.foundingMembers; i++) {
-            if (Math.random() * 100 < probability) {
-                leftCount++;
-            }
+        if (!isProfitable) {
+            hpLoss++;
+            reasons.push("Annual Loss");
+        }
+        if (!isHappy) {
+            hpLoss++;
+            reasons.push("Low Happiness");
         }
 
-        this.foundingMembers -= leftCount;
+        // Apply HP Loss
+        this.resourceManager.kpis.hp -= hpLoss;
+
+        // Reset Annual Stats
+        this.annualProfit = 0;
 
         // Show Modal
         this.uiManager.showEventModal(
-            `Chicken Party ${this.year} `,
-            `Another year has passed.\nDeparture Chance: ${probability.toFixed(1)}%\n\n${leftCount > 0 ? leftCount + " founding member(s) left the company." : "Everyone stayed!"} \n\nRemaining Founders: ${this.foundingMembers} `,
+            `Chicken Party ${this.year}`,
+            `The partners have gathered.\n\nResult: ${hpLoss === 0 ? "Satisfied! No one left." : hpLoss + " Partner(s) left."}\nReasons: ${reasons.length > 0 ? reasons.join(", ") : "None"}\n\nRemaining Partners: ${this.resourceManager.kpis.hp}`,
             () => {
                 // On Close
                 this.year++;
-                this.stress = 0; // Reset annual stress
                 this.isPlaying = true;
                 this.lastTime = performance.now();
                 requestAnimationFrame((t) => this.loop(t));
 
-                if (this.foundingMembers <= 0) {
-                    this.triggerGameOver("The last founder has left.");
+                if (this.resourceManager.kpis.hp <= 0) {
+                    this.triggerGameOver("All partners have abandoned the ship.");
                 }
             }
         );
@@ -204,7 +254,7 @@ class Game {
         this.isGameOver = true;
         this.isPlaying = false;
         this.soundManager.playErrorSound();
-        alert(`GAME OVER\n\n${reason} \n\nRefresh to restart.`);
+        alert(`GAME OVER\n\n${reason}\n\nSurvived until Year ${this.year}`);
         location.reload();
     }
 

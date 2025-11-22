@@ -56,7 +56,11 @@ class SceneManager {
             marketing: new THREE.MeshStandardMaterial({ color: 0xf97316 }), // Orange
             server: new THREE.MeshStandardMaterial({ color: 0x10b981 }), // Emerald Green
             pantry: new THREE.MeshStandardMaterial({ color: 0xfacc15 }), // Yellow
-            meeting: new THREE.MeshStandardMaterial({ color: 0xa855f7 })  // Purple
+            meeting: new THREE.MeshStandardMaterial({ color: 0xa855f7 }),  // Purple
+            senior_engineer: new THREE.MeshStandardMaterial({ color: 0x1e3a8a }), // Dark Blue
+            pm: new THREE.MeshStandardMaterial({ color: 0x9333ea }), // Purple
+            manager_office: new THREE.MeshStandardMaterial({ color: 0xef4444 }), // Red
+            plant: new THREE.MeshStandardMaterial({ color: 0x22c55e }) // Green
         };
 
         this.geometries = {
@@ -113,7 +117,8 @@ class SceneManager {
     }
 
     addUnitVisual(unit) {
-        const mesh = new THREE.Mesh(this.geometries.box, this.materials[unit.type]);
+        const material = this.materials[unit.type] || this.materials.engineer; // Fallback
+        const mesh = new THREE.Mesh(this.geometries.box, material);
         const pos = this.gridToWorld(unit.x, unit.y);
         mesh.position.set(pos.x, this.cellSize / 2, pos.z);
         mesh.castShadow = true;
@@ -240,5 +245,19 @@ class SceneManager {
         }
         this.highlightMesh.visible = false;
         return null;
+    }
+
+    updateUnitVisuals(units) {
+        units.forEach(unit => {
+            const mesh = this.unitMeshes.get(unit.id);
+            if (mesh && unit.runtime) {
+                if (unit.runtime.isZombie) {
+                    mesh.material = new THREE.MeshStandardMaterial({ color: 0x888888 }); // Gray for Zombie
+                } else {
+                    // Reset to original material
+                    mesh.material = this.materials[unit.type] || this.materials.engineer;
+                }
+            }
+        });
     }
 }

@@ -1,62 +1,81 @@
 class ResourceManager {
     constructor() {
         this.kpis = {
-            cash: 1000,
-            tech: 0,
-            reputation: 0,
-            welfare: 50,
-            staff: 0
+            cash: 10000,
+            tech: 0, // Product Stock
+            rd_power: 0, // Total R&D Output
+            sales_power: 0, // Total Sales Output
+            welfare: 50, // Average Happiness
+            staff: 0,
+            hp: 5 // Partner Bond
         };
 
         this.flows = {
             cash: 0,
-            tech: 0,
-            reputation: 0,
-            welfare: 0
+            rd_power: 0,
+            sales_power: 0,
+            welfare: 0,
+            totalSalary: 0
         };
 
         this.unitDefinitions = {
             engineer: {
-                name: "Engineer",
+                name: "Jr. Engineer",
                 icon: "👓",
-                description: "A coding wizard who transforms caffeine into elegant algorithms. The backbone of innovation, working late nights and shipping features at lightning speed.",
+                description: "Produces Tech Stock (Inventory). Needs focus.",
                 cost: 100,
-                stats: { cost: 1, tech: 1, welfare: 0, rep: 0 }
+                stats: { cost: 10, rd: 20, sales: 0, welfare: 0, rep: 0, type: 'staff' }
             },
-            marketing: {
-                name: "Marketing",
+            senior_engineer: {
+                name: "Sr. Engineer",
+                icon: "👴",
+                description: "High Tech Stock output. Stresses Juniors.",
+                cost: 300,
+                stats: { cost: 50, rd: 80, sales: 0, welfare: 0, rep: 0, type: 'staff' }
+            },
+            marketing: { // Sales
+                name: "Sales",
                 icon: "📢",
-                description: "Master of storytelling and growth hacking. Turns your product into a movement, spreading the word across social media and beyond.",
-                cost: 200,
-                stats: { cost: 5, tech: 0, welfare: 0, rep: 1 }
+                description: "Converts Tech Stock to Cash.",
+                cost: 150,
+                stats: { cost: 12, rd: 0, sales: 20, welfare: 0, rep: 0, type: 'staff' }
+            },
+            pm: {
+                name: "Project Manager",
+                icon: "📅",
+                description: "Boosts neighbors' Efficiency.",
+                cost: 250,
+                stats: { cost: 40, rd: 0, sales: 0, welfare: 0, rep: 0, type: 'staff' }
             },
             server: {
                 name: "Server",
                 icon: "💾",
-                description: "The silent guardian of your digital empire. Humming 24/7 in the cloud, processing requests and serving data to users worldwide.",
-                cost: 150,
-                stats: { cost: 2, tech: 0.5, welfare: 0, rep: 0 }
+                description: "Boosts neighbors' R&D. Noisy.",
+                cost: 500,
+                stats: { cost: 20, rd: 0, sales: 0, welfare: -5, rep: 0, type: 'facility' }
             },
             pantry: {
                 name: "Pantry",
                 icon: "☕",
-                description: "Stocked with organic snacks, artisan coffee, and energy drinks. A startup tradition that keeps morale high and productivity flowing.",
+                description: "Restores Happiness.",
                 cost: 300,
-                stats: { cost: 1, tech: 0, welfare: 1, rep: 0 }
+                stats: { cost: 5, rd: 0, sales: 0, welfare: 5, rep: 0, type: 'facility' }
             },
-            meeting: {
-                name: "Meeting Room",
-                icon: "🤝",
-                description: "A sacred space for brainstorming, standups, and deep discussions. Where ideas collide and innovation is born (or time disappears).",
-                cost: 500,
-                stats: { cost: 0, tech: 0, welfare: 2, rep: 0 }
+            manager_office: {
+                name: "Manager Office",
+                icon: "💼",
+                description: "Reduces Salary. Lowers Happiness.",
+                cost: 1000,
+                stats: { cost: 0, rd: 0, sales: 0, welfare: -10, rep: 0, type: 'facility' }
+            },
+            plant: {
+                name: "Plant",
+                icon: "🪴",
+                description: "Small Happiness boost.",
+                cost: 50,
+                stats: { cost: 0, rd: 0, sales: 0, welfare: 2, rep: 0, type: 'facility' }
             }
         };
-
-        // Legacy support (mapping to new structure if needed, or just using new structure)
-        // For now, I'll keep the old objects but populate them from the new source of truth if I were refactoring fully.
-        // But to minimize breakage, I will just add the new object and keep the old ones for now, 
-        // or better, refactor the old ones to use this new object.
 
         this.unitStats = {};
         this.buildCosts = {};
@@ -80,61 +99,153 @@ class ResourceManager {
     }
 
     refund(type) {
-        // Refund 50%
         this.kpis.cash += Math.floor(this.buildCosts[type] * 0.5);
     }
 
-    calculateFlows(gridUnits) {
+    // Main calculation loop
+    calculateFlows(gridManager) {
         // Reset flows
-        this.flows = { cash: 0, tech: 0, reputation: 0, welfare: 0 };
+        this.flows = { cash: 0, rd_power: 0, sales_power: 0, welfare: 0 };
         this.kpis.staff = 0;
 
-        gridUnits.forEach(unit => {
-            const stats = this.unitStats[unit.type];
-            if (stats) {
-                this.flows.cash -= stats.cost;
-                this.flows.tech += stats.tech;
-                this.flows.reputation += stats.rep;
-                this.flows.welfare += stats.welfare;
+        let totalHappiness = 0;
+        let staffCount = 0;
+        let totalSalary = 0;
 
-                // Adjacency bonuses (handled by GridManager passing modified stats? 
-                // Or we calculate here if we have the grid? 
-                // For simplicity, let's assume GridManager handles the "effective stats" or we just do simple sum for now)
+        const units = gridManager.getAllUnits();
 
-                if (unit.type === 'engineer' || unit.type === 'marketing') {
-                    this.kpis.staff++;
+        // 1. Calculate Happiness & Efficiency for each unit
+        units.forEach(unit => {
+            const def = this.unitDefinitions[unit.type];
+            if (!def) return;
+
+            // Initialize runtime stats if not present
+            if (!unit.runtime) unit.runtime = { happiness: 50, efficiency: 1, isZombie: false };
+
+            if (def.stats.type === 'staff') {
+                this.kpis.staff++;
+                staffCount++;
+
+                // Calculate Happiness
+                // Base 50 + Env + Policy (TODO) - Crowding
+                let envMod = 0;
+                let crowding = gridManager.getNeighborCount(unit.x, unit.y, 1); // 3x3 area (range 1)
+                // Crowding penalty: -2 per neighbor
+                let crowdingPenalty = crowding * 2;
+
+                // Check neighbors for specific buffs/debuffs
+                const neighbors = gridManager.getNeighbors(unit.x, unit.y, 1);
+                neighbors.forEach(n => {
+                    if (n.type === 'pantry') envMod += 5; // Pantry buff
+                    if (n.type === 'server') envMod -= 5; // Server noise
+                    if (n.type === 'manager_office') envMod -= 10; // Office pressure
+                    if (n.type === 'plant') envMod += 2; // Plant buff
+                    if (n.type === 'senior_engineer' && unit.type === 'engineer') envMod -= 5; // Senior stress on Junior
+                });
+
+                unit.runtime.happiness = Math.max(0, Math.min(100, 50 + envMod - crowdingPenalty));
+                totalHappiness += unit.runtime.happiness;
+
+                // Calculate Efficiency
+                // Formula: (Happiness / 50)^2
+                if (unit.runtime.happiness < 50) {
+                    unit.runtime.efficiency = Math.pow(unit.runtime.happiness / 50, 2);
+                } else {
+                    unit.runtime.efficiency = 1 + (unit.runtime.happiness - 50) / 100; // Bonus for > 50
+                }
+
+                // Zombie Check
+                if (unit.runtime.efficiency < 0.1) {
+                    unit.runtime.isZombie = true;
+                    unit.runtime.efficiency = 0;
+                } else {
+                    unit.runtime.isZombie = false;
                 }
             }
         });
 
-        // Base Sales Revenue (Simplified: Cash Flow = Reputation * 2 - Costs)
-        const salesRevenue = this.kpis.reputation * 2;
-        this.flows.cash += salesRevenue;
+        this.kpis.welfare = staffCount > 0 ? totalHappiness / staffCount : 50;
+
+        // 2. Calculate Flows based on Efficiency
+        units.forEach(unit => {
+            const def = this.unitDefinitions[unit.type];
+            if (!def) return;
+
+            // Costs are fixed (Zombie still gets paid)
+            // Manager Office reduces salary by 10%
+            let salaryMod = 1.0;
+            const neighbors = gridManager.getNeighbors(unit.x, unit.y, 1);
+            if (neighbors.some(n => n.type === 'manager_office')) salaryMod = 0.9;
+
+            const salary = def.stats.cost * salaryMod;
+            totalSalary += salary;
+
+            if (def.stats.type === 'staff') {
+                // Output scaled by efficiency
+                let efficiency = unit.runtime.efficiency;
+
+                // PM Buff: +10% efficiency to neighbors
+                if (neighbors.some(n => n.type === 'pm')) efficiency *= 1.1;
+
+                // R&D Production
+                if (def.stats.rd > 0) {
+                    // Server Buff: +50% Tech (R&D)
+                    let techMod = 1.0;
+                    if (neighbors.some(n => n.type === 'server')) techMod = 1.5;
+                    this.flows.rd_power += def.stats.rd * efficiency * techMod;
+                }
+
+                // Sales Production
+                if (def.stats.sales > 0) {
+                    this.flows.sales_power += def.stats.sales * efficiency;
+                }
+
+            } else {
+                // Facilities (Passive effects handled in step 1 or here)
+                this.flows.welfare += def.stats.welfare; // Global welfare boost? No, local.
+                // Facility costs already handled.
+            }
+        });
+
+        // 3. Calculate Profit (Stock-based)
+        // We only calculate potential flows here. Actual conversion happens in tick.
+        this.flows.totalSalary = totalSalary;
+
+        // Update KPIs for display (Rates)
+        this.kpis.rd_power = this.flows.rd_power;
+        this.kpis.sales_power = this.flows.sales_power;
     }
 
     tick(deltaTime) {
-        // Apply flows
-        // deltaTime is in seconds
-        this.kpis.cash += this.flows.cash * deltaTime;
-        this.kpis.tech += this.flows.tech * deltaTime;
-        this.kpis.reputation += this.flows.reputation * deltaTime;
+        if (deltaTime <= 0) return;
 
-        // Welfare doesn't accumulate like currency, it modifies the "Stress" target or is a static value?
-        // Design doc says: "Welfare: Reduces Stress accumulation". 
-        // Let's treat Welfare as a static stat derived from units, NOT a resource that piles up.
-        // So we don't add flow to welfare. Welfare IS the flow.
-        // Wait, "Welfare: Reduces Stress accumulation".
-        // Let's keep Welfare as a value that represents the current "Comfort Level".
-        // So we reset Welfare every frame to base + units?
-        // Actually, let's make Welfare a static value determined by the grid.
-    }
+        // 1. Accumulate R&D into Tech Stock
+        this.kpis.tech += this.flows.rd_power * deltaTime;
 
-    updateWelfare(gridUnits) {
-        let baseWelfare = 0;
-        gridUnits.forEach(unit => {
-            const stats = this.unitStats[unit.type];
-            if (stats) baseWelfare += stats.welfare;
-        });
-        this.kpis.welfare = baseWelfare;
+        // 2. Calculate Sales Capacity (Max items we can sell this tick)
+        const maxSales = this.flows.sales_power * deltaTime;
+
+        // 3. Determine Actual Sales (Limited by Stock and Capacity)
+        // Ensure tech is non-negative before calc
+        this.kpis.tech = Math.max(0, this.kpis.tech);
+        const actualSales = Math.min(this.kpis.tech, maxSales);
+
+        // 4. Consume Stock
+        this.kpis.tech -= actualSales;
+        // Clamp again just in case of float errors
+        this.kpis.tech = Math.max(0, this.kpis.tech);
+
+        // 5. Calculate Financials
+        const unitPrice = 2; // $2 per unit
+        const revenue = actualSales * unitPrice;
+        const expense = this.flows.totalSalary * deltaTime;
+
+        // 6. Apply Cash Flow
+        // Store rate for UI/Profit tracking
+        this.flows.cash = (revenue - expense) / deltaTime;
+        this.kpis.cash += revenue - expense;
+
+        // Cap welfare
+        this.kpis.welfare = Math.max(0, Math.min(100, this.kpis.welfare));
     }
 }

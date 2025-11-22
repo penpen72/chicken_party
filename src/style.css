@@ -157,7 +157,7 @@ body {
 
 .btn-icon {
   font-size: 2rem;
-  fil ter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
 .btn-label {
@@ -223,10 +223,36 @@ body {
   }
 }
 
+/* Icon Toggles */
+.icon-toggle {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.2s, transform 0.1s;
+  filter: grayscale(100%);
+  margin-left: 10px;
+}
+
+.icon-toggle.active {
+  opacity: 1;
+  filter: grayscale(0%);
+}
+
+.icon-toggle:hover {
+  transform: scale(1.1);
+}
+
+.icon-toggle:active {
+  transform: scale(0.95);
+}
+
 .hidden {
   display: none !important;
 }
 
+/* Event Modal */
 #event-modal {
   position: absolute;
   top: 0;
@@ -245,28 +271,9 @@ body {
   background: #222;
   padding: 40px;
   border-radius: 10px;
-  text-align: center;
-  max-width: 500px;
-  border: 2px solid var(--accent-color);
 }
 
-#event-title {
-  color: var(--accent-color);
-  margin-top: 0;
-}
-
-#event-close-btn {
-  background: var(--accent-color);
-  color: black;
-  border: none;
-  padding: 10px 30px;
-  font-size: 1.1rem;
-  border-radius: 5px;
-  margin-top: 20px;
-  cursor: pointer;
-}
-
-/* Unit Info Panel (For placed units) - RIGHT SIDE */
+/* Unit Info Panel */
 #unit-info-panel {
   position: absolute;
   top: 80px;
@@ -283,12 +290,6 @@ body {
   pointer-events: auto;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
   transition: all 0.3s ease-in-out;
-}
-
-#unit-info-panel.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(20px);
 }
 
 .unit-header {
@@ -349,7 +350,7 @@ body {
   font-size: 0.85rem;
 }
 
-/* Purchase Preview Panel - Inside bottom bar */
+/* Purchase Preview Panel */
 #purchase-preview-panel {
   width: 560px;
   max-width: 90vw;
