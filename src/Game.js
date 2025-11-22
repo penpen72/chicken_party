@@ -55,7 +55,7 @@ class Game {
 
         // 2. Update Time
         // DEBUG: 10 real seconds = 1 game day
-        this.day += deltaTime * 0.1;
+        this.day += deltaTime * 1;
         if (this.day >= 365) {
             this.day = 1;
             this.lastEventDay = 1;
