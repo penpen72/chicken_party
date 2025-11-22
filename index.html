@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chicken Party 3D</title>
+    <link rel="stylesheet" href="./src/style.css" />
+    <!-- Import Map for Three.js (No Build Step Required) -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+        }
+      }
+    </script>
+</head>
+
+<body>
+    <div id="app">
+        <canvas id="game-canvas"></canvas>
+
+        <!-- UI Overlay -->
+        <div id="ui-layer">
+            <!-- Start Screen -->
+            <div id="start-screen"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 200; color: white;">
+                <h1 style="font-size: 3rem; margin-bottom: 10px;">Chicken Party 3D</h1>
+                <p style="font-size: 1.2rem; color: #ccc;">Manage your startup. Survive the Chicken Party.</p>
+                <button id="start-btn"
+                    style="margin-top: 30px; padding: 15px 40px; font-size: 1.5rem; background: #ffcc00; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: transform 0.2s;">START
+                    GAME</button>
+            </div>
+
+            <!-- Top Bar: Stats -->
+            <div id="top-bar">
+                <div class="stat-item progress-container">
+                    <span id="year-display">2013</span>
+                    <div class="progress-bar-bg">
+                        <div id="time-progress-bar" class="progress-bar-fill"></div>
+                    </div>
+                </div>
+                <div class="stat-item">💰 <span id="cash-display">$1000</span></div>
+                <div class="stat-item">👥 <span id="founders-display">5</span></div>
+                <div class="stat-item">🔬 <span id="tech-display">0</span></div>
+                <div class="stat-item">❤️ <span id="welfare-display">50</span></div>
+            </div>
+
+            <!-- Notification Area -->
+            <div id="notification-area"></div>
+
+            <!-- Bottom Bar: Controls -->
+            <div id="bottom-bar">
+                <div id="build-menu">
+                    <button class="build-btn" data-type="engineer">Engineer ($100)</button>
+                    <button class="build-btn" data-type="marketing">Marketing ($200)</button>
+                    <button class="build-btn" data-type="server">Server ($150)</button>
+                    <button class="build-btn" data-type="pantry">Pantry ($300)</button>
+                    <button class="build-btn" data-type="meeting">Meeting Room ($500)</button>
+                </div>
+                <div id="controls">
+                    <button id="delete-mode-btn">🗑️ Sell Mode</button>
+                </div>
+            </div>
+
+            <!-- Event Modal (Hidden by default) -->
+            <div id="event-modal" class="hidden">
+                <div class="modal-content">
+                    <h2 id="event-title">Event Title</h2>
+                    <p id="event-desc">Event Description</p>
+                    <button id="event-close-btn">Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="./src/main.js"></script>
+</body>
+
+</html>
