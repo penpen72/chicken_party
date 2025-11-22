@@ -4,6 +4,7 @@ export class UIManager {
 
         // Elements
         this.yearDisplay = document.getElementById('year-display');
+        this.dayDisplay = document.getElementById('day-display');
         this.progressBar = document.getElementById('time-progress-bar');
         this.cashDisplay = document.getElementById('cash-display');
         this.foundersDisplay = document.getElementById('founders-display');
@@ -49,6 +50,7 @@ export class UIManager {
 
     updateUI(kpis, year, day, founders) {
         this.yearDisplay.textContent = year;
+        this.dayDisplay.textContent = `Day ${day}`;
         const progress = (day / 365) * 100;
         this.progressBar.style.width = `${progress}%`;
 
