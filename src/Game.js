@@ -1,11 +1,4 @@
-import { GridManager } from './GridManager.js';
-import { ResourceManager } from './ResourceManager.js';
-import { SceneManager } from './SceneManager.js';
-import { UIManager } from './UIManager.js';
-import { SoundManager } from './SoundManager.js';
-import { EventManager } from './EventManager.js';
-
-export class Game {
+class Game {
     constructor() {
         this.lastTime = 0;
         this.isPlaying = false;
@@ -93,11 +86,6 @@ export class Game {
         // 6. Update UI
         this.uiManager.updateUI(this.resourceManager.kpis, this.year, Math.floor(this.day), this.foundingMembers);
 
-        // Check Game Over (Bankruptcy)
-        if (this.resourceManager.kpis.cash < 0) {
-            this.triggerGameOver("Bankruptcy! You ran out of cash.");
-        }
-
         // Check Game Over (No Founders)
         if (this.foundingMembers <= 0) {
             this.triggerGameOver("All founding members have left.");
@@ -141,6 +129,7 @@ export class Game {
                 this.sceneManager.removeUnitVisual(removed);
                 this.resourceManager.refund(removed.type);
                 this.soundManager.playDeleteSound();
+                this.uiManager.hideUnitInfo(); // Hide info if deleted
             }
         } else if (this.selectedBuildType) {
             // Try to build
@@ -157,6 +146,15 @@ export class Game {
             } else {
                 console.log("Not enough cash!");
                 this.soundManager.playErrorSound();
+            }
+        } else {
+            // Select Unit
+            const unit = this.gridManager.getUnitAt(gridPos.x, gridPos.y);
+            if (unit) {
+                this.uiManager.showUnitInfo(unit.type);
+                this.soundManager.playEventSound(); // Or a specific select sound
+            } else {
+                this.uiManager.hideUnitInfo();
             }
         }
     }

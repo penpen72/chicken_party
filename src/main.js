@@ -1,5 +1,5 @@
 // import './style.css' // CSS is loaded via <link> in HTML
-import { Game } from './Game.js'
+// import { Game } from './Game.js'
 
 window.addEventListener('DOMContentLoaded', () => {
   const game = new Game();

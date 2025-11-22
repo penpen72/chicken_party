@@ -1,4 +1,4 @@
-export class EventManager {
+class EventManager {
     constructor(game) {
         this.game = game;
         this.events = [

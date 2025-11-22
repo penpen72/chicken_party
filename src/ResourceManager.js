@@ -1,4 +1,4 @@
-export class ResourceManager {
+class ResourceManager {
     constructor() {
         this.kpis = {
             cash: 1000,
@@ -15,23 +15,56 @@ export class ResourceManager {
             welfare: 0
         };
 
-        // Unit Definitions (Cost & Effect per tick)
-        // Tick rate assumed: 1 tick per second for calculation simplicity, scaled by deltaTime
-        this.unitStats = {
-            engineer: { cost: 1, tech: 1, welfare: 0, rep: 0 },
-            marketing: { cost: 5, tech: 0, welfare: 0, rep: 1 },
-            server: { cost: 2, tech: 0.5, welfare: 0, rep: 0 },
-            pantry: { cost: 1, tech: 0, welfare: 1, rep: 0 },
-            meeting: { cost: 0, tech: 0, welfare: 2, rep: 0 } // Meeting room has no running cost? Let's say 0 for now
+        this.unitDefinitions = {
+            engineer: {
+                name: "Engineer",
+                icon: "👓",
+                description: "A coding wizard who transforms caffeine into elegant algorithms. The backbone of innovation, working late nights and shipping features at lightning speed.",
+                cost: 100,
+                stats: { cost: 1, tech: 1, welfare: 0, rep: 0 }
+            },
+            marketing: {
+                name: "Marketing",
+                icon: "📢",
+                description: "Master of storytelling and growth hacking. Turns your product into a movement, spreading the word across social media and beyond.",
+                cost: 200,
+                stats: { cost: 5, tech: 0, welfare: 0, rep: 1 }
+            },
+            server: {
+                name: "Server",
+                icon: "💾",
+                description: "The silent guardian of your digital empire. Humming 24/7 in the cloud, processing requests and serving data to users worldwide.",
+                cost: 150,
+                stats: { cost: 2, tech: 0.5, welfare: 0, rep: 0 }
+            },
+            pantry: {
+                name: "Pantry",
+                icon: "☕",
+                description: "Stocked with organic snacks, artisan coffee, and energy drinks. A startup tradition that keeps morale high and productivity flowing.",
+                cost: 300,
+                stats: { cost: 1, tech: 0, welfare: 1, rep: 0 }
+            },
+            meeting: {
+                name: "Meeting Room",
+                icon: "🤝",
+                description: "A sacred space for brainstorming, standups, and deep discussions. Where ideas collide and innovation is born (or time disappears).",
+                cost: 500,
+                stats: { cost: 0, tech: 0, welfare: 2, rep: 0 }
+            }
         };
 
-        this.buildCosts = {
-            engineer: 100,
-            marketing: 200,
-            server: 150,
-            pantry: 300,
-            meeting: 500
-        };
+        // Legacy support (mapping to new structure if needed, or just using new structure)
+        // For now, I'll keep the old objects but populate them from the new source of truth if I were refactoring fully.
+        // But to minimize breakage, I will just add the new object and keep the old ones for now, 
+        // or better, refactor the old ones to use this new object.
+
+        this.unitStats = {};
+        this.buildCosts = {};
+
+        for (const [key, def] of Object.entries(this.unitDefinitions)) {
+            this.unitStats[key] = def.stats;
+            this.buildCosts[key] = def.cost;
+        }
     }
 
     canAfford(type) {

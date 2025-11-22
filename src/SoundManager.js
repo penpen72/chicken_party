@@ -1,4 +1,4 @@
-export class SoundManager {
+class SoundManager {
     constructor() {
         this.ctx = new (window.AudioContext || window.webkitAudioContext)();
         this.enabled = true;

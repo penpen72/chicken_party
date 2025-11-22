@@ -1,4 +1,4 @@
-export class GridManager {
+class GridManager {
     constructor(width, height) {
         this.width = width;
         this.height = height;

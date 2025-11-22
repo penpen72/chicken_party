@@ -1,6 +1,4 @@
-import * as THREE from 'three';
-
-export class SceneManager {
+class SceneManager {
     constructor(containerId, gridWidth, gridHeight) {
         this.container = document.getElementById(containerId);
         this.width = this.container.clientWidth;
