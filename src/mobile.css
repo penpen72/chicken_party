@@ -1,0 +1,219 @@
+/* ========================================
+   MOBILE OPTIMIZATIONS
+   ======================================== */
+
+/* Panel Backdrop for mobile */
+.panel-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 49;
+    display: none;
+    pointer-events: auto;
+}
+
+.panel-backdrop.active {
+    display: block;
+}
+
+/* Tablet and below */
+@media (max-width: 768px) {
+    :root {
+        --bottom-ui-height: 240px;
+    }
+
+    /* Unit Info Panel - Bottom Sheet Style */
+    #unit-info-panel {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        top: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: 60vh;
+        border-radius: 16px 16px 0 0 !important;
+        border: none !important;
+        border-top: 2px solid var(--accent-color) !important;
+        transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 51;
+    }
+
+    #unit-info-panel:not(.hidden) {
+        transform: translateY(0);
+    }
+
+    /* Add swipe indicator */
+    #unit-info-panel::before {
+        content: '';
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 4px;
+        background: #666;
+        border-radius: 2px;
+    }
+
+    /* Top bar - more compact */
+    #top-bar {
+        gap: 10px;
+        padding: 8px 12px;
+        flex-wrap: wrap;
+    }
+
+    .stat-item {
+        font-size: 1rem;
+        gap: 6px;
+    }
+
+    .progress-container {
+        min-width: 150px;
+    }
+
+    .progress-bar-bg {
+        width: 100px;
+    }
+
+    /* Bottom bar adjustments */
+    .build-menu {
+        max-width: 95vw;
+        padding: 8px;
+    }
+
+    /* Larger touch targets */
+    .build-btn {
+        min-width: 80px;
+        min-height: 80px;
+        padding: 10px;
+    }
+
+    .tab-btn {
+        min-height: 44px;
+        padding: 10px 16px;
+    }
+
+    #delete-mode-btn {
+        min-height: 44px;
+        padding: 12px 16px;
+    }
+
+    /* Purchase preview panel */
+    #purchase-preview-panel {
+        width: 95vw;
+        max-width: 95vw;
+        padding: 12px 14px;
+    }
+
+    .preview-header {
+        gap: 8px;
+    }
+
+    #preview-icon {
+        font-size: 1.5rem;
+    }
+
+    #preview-name {
+        font-size: 1rem;
+    }
+}
+
+/* Mobile phones */
+@media (max-width: 480px) {
+    :root {
+        --bottom-ui-height: 260px;
+    }
+
+    #top-bar {
+        gap: 8px;
+        padding: 6px 10px;
+    }
+
+    .stat-item {
+        font-size: 0.9rem;
+        gap: 4px;
+    }
+
+    .progress-container {
+        min-width: 120px;
+    }
+
+    /* Tab buttons - smaller text */
+    .tab-btn {
+        padding: 10px;
+        font-size: 0.85rem;
+    }
+
+    /* Build buttons */
+    .build-menu {
+        gap: 8px;
+    }
+
+    .build-btn {
+        min-width: 70px;
+        min-height: 70px;
+    }
+
+    .btn-icon {
+        font-size: 1.5rem;
+    }
+
+    .btn-name {
+        font-size: 0.75rem;
+    }
+
+    .btn-price {
+        font-size: 0.7rem;
+    }
+
+    /* Policy items */
+    .policy-item {
+        width: 200px;
+        padding: 12px;
+    }
+
+    .policy-name {
+        font-size: 0.85rem;
+    }
+
+    /* Unit info panel content */
+    #unit-info-panel {
+        padding: 20px 16px 16px;
+    }
+
+    .unit-header {
+        margin-bottom: 12px;
+    }
+
+    #unit-icon {
+        font-size: 2rem;
+    }
+
+    #unit-name {
+        font-size: 1.1rem;
+    }
+}
+
+/* Landscape mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    :root {
+        --bottom-ui-height: 180px;
+    }
+
+    #unit-info-panel {
+        max-height: 70vh;
+    }
+
+    #top-bar {
+        padding: 6px 10px;
+    }
+
+    .stat-item {
+        font-size: 0.85rem;
+    }
+}

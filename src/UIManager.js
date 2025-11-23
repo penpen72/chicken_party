@@ -32,6 +32,9 @@ class UIManager {
         this.previewCost = document.getElementById('preview-cost');
         this.previewStats = document.getElementById('preview-stats');
 
+        // Backdrop for mobile
+        this.panelBackdrop = document.getElementById('panel-backdrop');
+
         // Bind Build Buttons
         const buildBtns = document.querySelectorAll('.build-btn');
         buildBtns.forEach(btn => {
@@ -93,6 +96,19 @@ class UIManager {
             this.game.settings.showBuffs = !this.game.settings.showBuffs;
             this.updateToggleState(this.btnBuffs, this.game.settings.showBuffs);
         });
+
+        // Tab Navigation
+        this.initTabNavigation();
+
+        // Initialize Policies Tab
+        this.initializePolicies();
+
+        // Backdrop click to close panel
+        if (this.panelBackdrop) {
+            this.panelBackdrop.addEventListener('click', () => {
+                this.hideUnitInfo();
+            });
+        }
     }
 
     updateToggleState(btn, isActive) {
@@ -144,10 +160,20 @@ class UIManager {
 
         this.unitStats.innerHTML = statsHtml;
         this.unitInfoPanel.classList.remove('hidden');
+
+        // Show backdrop on mobile
+        if (this.panelBackdrop) {
+            this.panelBackdrop.classList.add('active');
+        }
     }
 
     hideUnitInfo() {
         this.unitInfoPanel.classList.add('hidden');
+
+        // Hide backdrop
+        if (this.panelBackdrop) {
+            this.panelBackdrop.classList.remove('active');
+        }
     }
 
     showPurchasePreview(unitType) {
@@ -184,5 +210,99 @@ class UIManager {
 
     hidePurchasePreview() {
         this.purchasePreviewPanel.classList.add('hidden');
+    }
+
+    /**
+     * Initialize tab navigation system
+     */
+    initTabNavigation() {
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.switchTab(btn.dataset.tab);
+            });
+        });
+    }
+
+    /**
+     * Switch between tabs
+     * @param {string} tabName - Name of the tab to switch to
+     */
+    switchTab(tabName) {
+        // Update tab buttons
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        tabBtns.forEach(btn => {
+            if (btn.dataset.tab === tabName) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // Update tab panes
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        tabPanes.forEach(pane => {
+            if (pane.id === `tab-${tabName}`) {
+                pane.classList.add('active');
+            } else {
+                pane.classList.remove('active');
+            }
+        });
+
+        // Hide preview panel when switching tabs
+        this.hidePurchasePreview();
+
+        // Clear build mode selection
+        const buildBtns = document.querySelectorAll('.build-btn');
+        buildBtns.forEach(b => b.classList.remove('active'));
+        document.getElementById('delete-mode-btn').classList.remove('active');
+        this.game.selectedBuildType = null;
+        this.game.isDeleteMode = false;
+    }
+
+    /**
+     * Initialize policies tab with dynamic content
+     */
+    initializePolicies() {
+        const policiesList = document.getElementById('policies-list');
+        const policies = this.game.resourceManager.policies;
+
+        policiesList.innerHTML = ''; // Clear existing content
+
+        for (const [key, policy] of Object.entries(policies)) {
+            const policyItem = document.createElement('div');
+            policyItem.className = 'policy-item';
+            if (policy.active) policyItem.classList.add('active');
+
+            policyItem.innerHTML = `
+                <div class="policy-header">
+                    <span class="policy-name">${policy.name}</span>
+                    <span class="policy-cost">$${policy.cost}</span>
+                </div>
+                <div class="policy-desc">${policy.description || 'Improves company operations.'}</div>
+                <button class="policy-btn ${policy.active ? 'active' : ''}" data-policy="${key}">
+                    ${policy.active ? 'Active' : 'Activate'}
+                </button>
+            `;
+
+            // Bind button click
+            const btn = policyItem.querySelector('.policy-btn');
+            btn.addEventListener('click', () => {
+                if (policy.active) return; // Already active
+
+                if (this.game.resourceManager.kpis.cash >= policy.cost) {
+                    this.game.resourceManager.kpis.cash -= policy.cost;
+                    policy.active = true;
+                    btn.textContent = 'Active';
+                    btn.classList.add('active');
+                    policyItem.classList.add('active');
+                    this.game.soundManager.playBuildSound();
+                } else {
+                    this.game.soundManager.playErrorSound();
+                }
+            });
+
+            policiesList.appendChild(policyItem);
+        }
     }
 }
