@@ -73,10 +73,10 @@ class ResourceManager {
             pm: {
                 name: "Project Manager",
                 icon: "📅",
-                description: "Boosts neighbors' Efficiency.",
+                description: "Amplifies Tech: Converts 1 Tech -> 2 Tech (Max 20/day).",
                 cost: 250,
                 width: 1, height: 1,
-                stats: { cost: 40, rd: 0, sales: 0, welfare: 0, rep: 0, type: 'staff' }
+                stats: { cost: 40, rd: 0, sales: 0, welfare: 0, rep: 0, type: 'staff', conversion: 20 }
             },
             server: {
                 name: "Server Rack",
@@ -168,7 +168,7 @@ class ResourceManager {
     // Main calculation loop
     calculateFlows(gridManager) {
         // Reset flows
-        this.flows = { cash: 0, rd_power: 0, sales_power: 0, welfare: 0, totalSalary: 0 };
+        this.flows = { cash: 0, rd_power: 0, sales_power: 0, welfare: 0, totalSalary: 0, pm_power: 0 };
         this.kpis.staff = 0;
 
         let totalHappiness = 0;
@@ -339,10 +339,7 @@ class ResourceManager {
                 // Output scaled by efficiency
                 let efficiency = unit.runtime.efficiency;
 
-                const neighbors = gridManager.getNeighbors(unit.x, unit.y, 1);
-
-                // PM Buff: +10% efficiency to neighbors
-                if (neighbors.some(n => n.type === 'pm')) efficiency *= 1.1;
+                // Removed PM Buff (Old mechanic)
 
                 // Policy: Responsibility System -> +30% R&D per level
                 let policyRdMod = 1.0;
@@ -373,6 +370,11 @@ class ResourceManager {
                     this.flows.sales_power += def.stats.sales * efficiency * critMod;
                 }
 
+                // PM Conversion Power
+                if (def.stats.conversion > 0) {
+                    this.flows.pm_power += def.stats.conversion * efficiency;
+                }
+
             } else {
                 // Facilities (Passive effects handled in step 1 or here)
                 this.flows.welfare += def.stats.welfare; // Global welfare boost? No, local.
@@ -394,6 +396,17 @@ class ResourceManager {
 
         // 1. Accumulate R&D into Tech Stock
         this.kpis.tech += this.flows.rd_power * deltaTime;
+
+        // 1.5 PM Conversion (Amplifier)
+        // Converts 1 Tech -> 2 Tech (Net +1)
+        // Capacity: this.flows.pm_power * deltaTime
+        if (this.flows.pm_power > 0 && this.kpis.tech > 0) {
+            const maxConversion = this.flows.pm_power * deltaTime;
+            const actualConversion = Math.min(this.kpis.tech, maxConversion);
+            // Result: We consume 'actualConversion' and produce '2 * actualConversion'.
+            // Net change: +actualConversion
+            this.kpis.tech += actualConversion;
+        }
 
         // 2. Calculate Sales Capacity (Max items we can sell this tick)
         const maxSales = this.flows.sales_power * deltaTime;

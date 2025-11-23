@@ -33,12 +33,15 @@ Staff units are the core workforce. They require a daily salary and have specifi
     *   **Constraint**: If Tech Stock is 0, Sales units generate $0 but still cost salary.
 
 ### 1.4 Project Manager (PM)
-*   **Role**: Support
+*   **Role**: Amplifier
 *   **Cost**: $250
 *   **Salary**: $40/day
 *   **Stats**:
-    *   Neighbor Efficiency: +10%
-*   **Description**: Boosts the efficiency of all neighbors in a 3x3 area.
+    *   Tech Conversion: 20/day
+*   **Description**: Amplifies Tech production. Converts 1 Tech Stock into 2 Tech Stock (Net +1).
+*   **Details**:
+    *   **Capacity**: Can convert up to 20 Tech/day.
+    *   **Effect**: Acts as a multiplier for existing stock. Does not produce Tech from scratch (requires input).
 
 ## 2. Facilities
 Facilities are buildings that modify the environment. They do not have a daily salary but have one-time build costs.
