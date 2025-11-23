@@ -374,18 +374,6 @@ body {
   filter: grayscale(0%);
 }
 
-.icon-toggle:hover {
-  transform: scale(1.1);
-}
-
-.icon-toggle:active {
-  transform: scale(0.95);
-}
-
-.hidden {
-  display: none !important;
-}
-
 /* Event Modal */
 #event-modal {
   position: absolute;
@@ -804,6 +792,201 @@ body {
   #unit-info-panel {
     max-height: 70vh;
   }
+}
+
+.panel-backdrop.active {
+  display: block;
+}
+
+/* Tablet and below */
+@media (max-width: 768px) {
+  :root {
+    --bottom-ui-height: 240px;
+  }
+
+  /* Unit Info Panel - Bottom Sheet Style */
+  #unit-info-panel {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 60vh;
+    border-radius: 16px 16px 0 0 !important;
+    border: none !important;
+    border-top: 2px solid var(--accent-color) !important;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 51;
+  }
+
+  #unit-info-panel:not(.hidden) {
+    transform: translateY(0);
+  }
+
+  /* Add swipe indicator */
+  #unit-info-panel::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: #666;
+    border-radius: 2px;
+  }
+
+  /* Top bar - more compact */
+  #top-bar {
+    gap: 10px;
+    padding: 8px 12px;
+    flex-wrap: wrap;
+  }
+
+  .stat-item {
+    font-size: 1rem;
+    gap: 6px;
+  }
+
+  .progress-container {
+    min-width: 150px;
+  }
+
+  .progress-bar-bg {
+    width: 100px;
+  }
+
+  /* Bottom bar adjustments */
+  .build-menu {
+    max-width: 95vw;
+    padding: 8px;
+  }
+
+  /* Larger touch targets */
+  .build-btn {
+    min-width: 80px;
+    min-height: 80px;
+    padding: 10px;
+  }
+
+  .tab-btn {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+
+  #delete-mode-btn {
+    min-height: 44px;
+    padding: 12px 16px;
+  }
+
+  /* Purchase preview panel */
+  #purchase-preview-panel {
+    width: 95vw;
+    max-width: 95vw;
+    padding: 12px 14px;
+  }
+
+  .preview-header {
+    gap: 8px;
+  }
+
+  #preview-icon {
+    font-size: 1.5rem;
+  }
+
+  #preview-name {
+    font-size: 1rem;
+  }
+}
+
+/* Mobile phones */
+@media (max-width: 480px) {
+  :root {
+    --bottom-ui-height: 260px;
+  }
+
+  #top-bar {
+    gap: 8px;
+    padding: 6px 10px;
+  }
+
+  .stat-item {
+    font-size: 0.9rem;
+    gap: 4px;
+  }
+
+  .progress-container {
+    min-width: 120px;
+  }
+
+  /* Tab buttons - smaller text */
+  .tab-btn {
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+
+  /* Build buttons */
+  .build-menu {
+    gap: 8px;
+  }
+
+  .build-btn {
+    min-width: 70px;
+    min-height: 70px;
+  }
+
+  .btn-icon {
+    font-size: 1.5rem;
+  }
+
+  .btn-name {
+    font-size: 0.75rem;
+  }
+
+  .btn-price {
+    font-size: 0.7rem;
+  }
+
+  /* Policy items */
+  .policy-item {
+    width: 200px;
+    padding: 12px;
+  }
+
+  .policy-name {
+    font-size: 0.85rem;
+  }
+
+  /* Unit info panel content */
+  #unit-info-panel {
+    padding: 20px 16px 16px;
+  }
+
+  .unit-header {
+    margin-bottom: 12px;
+  }
+
+  #unit-icon {
+    font-size: 2rem;
+  }
+
+  #unit-name {
+    font-size: 1.1rem;
+  }
+}
+
+/* Landscape mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  :root {
+    --bottom-ui-height: 180px;
+  }
+
+  #unit-info-panel {
+    max-height: 70vh;
+  }
 
   #top-bar {
     padding: 6px 10px;
@@ -812,4 +995,169 @@ body {
   .stat-item {
     font-size: 0.85rem;
   }
+}
+
+/* ========================================
+   ESSENTIAL UTILITY CLASSES
+   ======================================== */
+
+.hidden {
+  display: none !important;
+}
+
+/* ========================================
+   COLOR-CODED STATS & VISUAL INDICATORS
+   ======================================== */
+
+/* Stat Color Coding */
+.stat-item[data-stat] span {
+  transition: color 0.3s ease;
+}
+
+/* HP Colors */
+.stat-hp.stat-good span {
+  color: var(--success-color);
+}
+
+.stat-hp.stat-warning span {
+  color: var(--accent-color);
+}
+
+.stat-hp.stat-danger span {
+  color: var(--danger-color);
+}
+
+/* Cash Colors */
+.stat-cash.stat-good span {
+  color: var(--success-color);
+}
+
+.stat-cash.stat-warning span {
+  color: var(--accent-color);
+}
+
+.stat-cash.stat-danger span {
+  color: var(--danger-color);
+}
+
+/* Welfare/Happiness Colors */
+.stat-welfare.stat-good span {
+  color: var(--success-color);
+}
+
+.stat-welfare.stat-warning span {
+  color: var(--accent-color);
+}
+
+.stat-welfare.stat-danger span {
+  color: var(--danger-color);
+}
+
+/* ========================================
+   EXPANDABLE STATS PANEL
+   ======================================== */
+
+#expandable-stats {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 600px;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(15px);
+  border: 2px solid var(--accent-color);
+  border-radius: 12px;
+  padding: 15px;
+  pointer-events: auto;
+  box-shadow: 0 5px 20px rgba(255, 204, 0, 0.3);
+  z-index: 90;
+  transition: all 0.3s ease-in-out;
+}
+
+#expandable-stats.hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-20px);
+  pointer-events: none;
+}
+
+.expandable-stats-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, rgba(255, 204, 0, 0.1) 0%, rgba(255, 204, 0, 0.05) 100%);
+  border: 1px solid rgba(255, 204, 0, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  background: linear-gradient(135deg, rgba(255, 204, 0, 0.15) 0%, rgba(255, 204, 0, 0.08) 100%);
+  border-color: rgba(255, 204, 0, 0.5);
+  transform: translateY(-2px);
+}
+
+.stat-card-icon {
+  font-size: 1.8rem;
+  filter: drop-shadow(0 2px 4px rgba(255, 204, 0, 0.3));
+  flex-shrink: 0;
+}
+
+.stat-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.stat-card-label {
+  font-size: 0.7rem;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.stat-card-value {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--accent-color);
+}
+
+/* ========================================
+   MOBILE/DESKTOP VISIBILITY
+   ======================================== */
+
+.mobile-only {
+  display: none;
+}
+
+.desktop-only {
+  display: flex;
+}
+
+@media (max-width: 768px) {
+  .mobile-only {
+    display: flex;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* Improved Icon Toggle Interaction */
+.icon-toggle:hover {
+  transform: scale(1.1);
+}
+
+.icon-toggle:active {
+  transform: scale(0.95);
 }
