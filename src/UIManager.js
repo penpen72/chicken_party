@@ -409,43 +409,54 @@ class UIManager {
     updateDashboard() {
         const summary = this.game.resourceManager.getDailySummary();
 
-        // Economics Section
+        // Daily Impact Section - Primary metrics
+        this.dashboardEconomics.innerHTML = `
+            <h3>📊 每日影響</h3>
+            <div class="metric-row">
+                <span class="metric-label">💸 每日薪資成本:</span>
+                <span class="metric-value negative">-$${Math.floor(summary.totalSalary)}/day</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">🔬 工程師Tech產出:</span>
+                <span class="metric-value positive">+${Math.floor(summary.engineerTechProduction)}/day</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">💰 Tech轉營收能力:</span>
+                <span class="metric-value positive">+$${Math.floor(summary.techToRevenueCapacity)}/day</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">🚀 Tech增量能力:</span>
+                <span class="metric-value neutral">+${Math.floor(summary.techAmplificationCapacity)}/day</span>
+            </div>
+            <hr style="margin: 12px 0; border: none; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div class="metric-row">
+                <span class="metric-label">📦 當前Tech庫存:</span>
+                <span class="metric-value neutral">${Math.floor(summary.techStock)} units</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">👥 員工數量:</span>
+                <span class="metric-value neutral">${summary.staffCount}</span>
+            </div>
+        `;
+
+        // Production Section - Additional details
         const profit = summary.estimatedProfit;
         const profitClass = profit >= 0 ? 'positive' : 'negative';
         const profitIcon = profit >= 0 ? '🟢' : '🔴';
 
-        this.dashboardEconomics.innerHTML = `
+        this.dashboardProduction.innerHTML = `
+            <h3>💼 經濟概況</h3>
             <div class="metric-row">
-                <span class="metric-label">💸 Daily Salary:</span>
+                <span class="metric-label">💸 每日支出:</span>
                 <span class="metric-value negative">-$${Math.floor(summary.totalSalary)}</span>
             </div>
             <div class="metric-row">
-                <span class="metric-label">💰 Max Revenue:</span>
+                <span class="metric-label">💰 最大營收潛力:</span>
                 <span class="metric-value positive">+$${Math.floor(summary.maxRevenue)}</span>
             </div>
             <div class="metric-row">
-                <span class="metric-label">${profitIcon} Net Profit/Loss:</span>
+                <span class="metric-label">${profitIcon} 淨損益:</span>
                 <span class="metric-value ${profitClass}">${profit >= 0 ? '+' : ''}$${Math.floor(profit)}/day</span>
-            </div>
-        `;
-
-        // Production Section
-        this.dashboardProduction.innerHTML = `
-            <div class="metric-row">
-                <span class="metric-label">🔬 R&D Output:</span>
-                <span class="metric-value neutral">${Math.floor(summary.rdOutput)}/day</span>
-            </div>
-            <div class="metric-row">
-                <span class="metric-label">📦 Tech Stock:</span>
-                <span class="metric-value neutral">${Math.floor(summary.techStock)} units</span>
-            </div>
-            <div class="metric-row">
-                <span class="metric-label">📢 Sales Capacity:</span>
-                <span class="metric-value neutral">${Math.floor(summary.salesCapacity)}/day</span>
-            </div>
-            <div class="metric-row">
-                <span class="metric-label">👥 Employees:</span>
-                <span class="metric-value neutral">${summary.staffCount}</span>
             </div>
         `;
 
@@ -467,17 +478,17 @@ class UIManager {
         let efficiencyText = '';
         if (happiness < 50) {
             const efficiency = Math.floor(Math.pow(happiness / 50, 2) * 100);
-            efficiencyText = `Low happiness reduces efficiency to ${efficiency}%`;
+            efficiencyText = `低快樂度降低效率至 ${efficiency}%`;
         } else if (happiness > 50) {
             const efficiency = Math.floor((1 + (happiness - 50) / 100) * 100);
-            efficiencyText = `High happiness boosts efficiency to ${efficiency}%`;
+            efficiencyText = `高快樂度提升效率至 ${efficiency}%`;
         } else {
-            efficiencyText = `Normal efficiency (100%)`;
+            efficiencyText = `正常效率 (100%)`;
         }
 
         this.dashboardHappiness.innerHTML = `
             <div class="metric-row">
-                <span class="metric-label">😊 Average Happiness:</span>
+                <span class="metric-label">😊 平均快樂度:</span>
                 <span class="metric-value neutral">${happiness}/100</span>
             </div>
             <div class="happiness-bar">

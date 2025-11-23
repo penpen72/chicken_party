@@ -168,7 +168,7 @@ class ResourceManager {
     // Main calculation loop
     calculateFlows(gridManager) {
         // Reset flows
-        this.flows = { cash: 0, rd_power: 0, sales_power: 0, welfare: 0, totalSalary: 0, pm_power: 0 };
+        this.flows = { cash: 0, rd_power: 0, engineer_rd_power: 0, sales_power: 0, welfare: 0, totalSalary: 0, pm_power: 0 };
         this.kpis.staff = 0;
 
         let totalHappiness = 0;
@@ -366,7 +366,13 @@ class ResourceManager {
                         techMod = 1.5;
                     }
 
-                    this.flows.rd_power += def.stats.rd * efficiency * techMod * policyRdMod * critMod;
+                    const rdOutput = def.stats.rd * efficiency * techMod * policyRdMod * critMod;
+                    this.flows.rd_power += rdOutput;
+
+                    // Track engineer-only production (excluding other sources)
+                    if (unit.type === 'engineer' || unit.type === 'senior_engineer') {
+                        this.flows.engineer_rd_power += rdOutput;
+                    }
                 }
 
                 // Sales Production
@@ -506,8 +512,13 @@ class ResourceManager {
 
             // Production
             rdOutput: this.flows.rd_power || 0,
+            engineerTechProduction: this.flows.engineer_rd_power || 0,
             salesCapacity: this.flows.sales_power || 0,
             techStock: this.kpis.tech || 0,
+
+            // Daily Impact Metrics
+            techToRevenueCapacity: maxRevenue, // Sales capacity * $2
+            techAmplificationCapacity: this.flows.pm_power || 0, // PM conversion power
 
             // Staff & Happiness
             staffCount: this.kpis.staff || 0,
