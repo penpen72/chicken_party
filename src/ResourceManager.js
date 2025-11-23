@@ -57,7 +57,7 @@ class ResourceManager {
             senior_engineer: {
                 name: "Sr. Engineer",
                 icon: "👴",
-                description: "High Tech Stock output. Stresses Juniors.",
+                description: "High Tech Stock output. Stresses Juniors. Global Stress (-1).",
                 cost: 300,
                 width: 1, height: 1,
                 stats: { cost: 50, rd: 80, sales: 0, welfare: 0, rep: 0, type: 'staff' }
@@ -177,6 +177,10 @@ class ResourceManager {
 
         const units = gridManager.getAllUnits();
 
+        // Count Senior Engineers for Global Penalty
+        const seniorCount = units.filter(u => u.type === 'senior_engineer').length;
+        const seniorPenalty = seniorCount * 1; // -1 per Senior Engineer
+
         // 1. Calculate Happiness & Efficiency for each unit
         units.forEach(unit => {
             const def = this.unitDefinitions[unit.type];
@@ -291,7 +295,7 @@ class ResourceManager {
                 if (this.policies.competitive_salary.level > 0) {
                     unit.runtime.happiness = 100; // Locked at max
                 } else {
-                    unit.runtime.happiness = Math.max(0, Math.min(100, 50 + envMod - crowdingPenalty));
+                    unit.runtime.happiness = Math.max(0, Math.min(100, 50 + envMod - crowdingPenalty - seniorPenalty));
                 }
 
                 totalHappiness += unit.runtime.happiness;

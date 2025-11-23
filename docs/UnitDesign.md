@@ -18,7 +18,9 @@ Staff units are the core workforce. They require a daily salary and have specifi
 *   **Stats**:
     *   R&D Output: 80
 *   **Description**: High output but expensive.
-*   **Special**: (Note: Code currently treats them as standard staff, but draft mentioned stress effects. Currently implements standard neighbor interactions).
+*   **Special**: 
+    *   **Stresses Juniors**: Neighbors (Jr. Engineers) get -5 Happiness.
+    *   **Global Stress**: Each Senior Engineer reduces Global Happiness by -1.
 
 ### 1.3 Sales
 *   **Role**: Revenue
