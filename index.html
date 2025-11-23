@@ -52,6 +52,7 @@
                 <div class="stat-item">❤️ <span id="welfare-display">50</span></div>
                 <button id="btn-toggle-production" class="icon-toggle active" title="Toggle Production Text">💸</button>
                 <button id="btn-toggle-buffs" class="icon-toggle active" title="Toggle Buffs">✨</button>
+                <button id="btn-toggle-dashboard" class="icon-toggle" title="Toggle Company Dashboard">📊</button>
             </div>
 
             <!-- Notification Area -->
@@ -185,6 +186,42 @@
                 <div id="unit-desc">Description goes here...</div>
                 <div id="unit-stats">
                     <!-- Stats will be injected here -->
+                </div>
+            </div>
+
+            <!-- Company Dashboard Panel -->
+            <div id="company-dashboard" class="hidden">
+                <div class="dashboard-header">
+                    <div class="dashboard-icon">📊</div>
+                    <div class="dashboard-title">Company Dashboard</div>
+                </div>
+
+                <div class="dashboard-section">
+                    <div class="section-header">💰 Daily Economics</div>
+                    <div id="dashboard-economics" class="dashboard-content">
+                        <!-- Economics data will be injected here -->
+                    </div>
+                </div>
+
+                <div class="dashboard-section">
+                    <div class="section-header">📈 Production Metrics</div>
+                    <div id="dashboard-production" class="dashboard-content">
+                        <!-- Production data will be injected here -->
+                    </div>
+                </div>
+
+                <div class="dashboard-section">
+                    <div class="section-header">🎯 Active Policies</div>
+                    <div id="dashboard-policies" class="dashboard-content">
+                        <!-- Policy effects will be injected here -->
+                    </div>
+                </div>
+
+                <div class="dashboard-section">
+                    <div class="section-header">😊 Happiness Impact</div>
+                    <div id="dashboard-happiness" class="dashboard-content">
+                        <!-- Happiness data will be injected here -->
+                    </div>
                 </div>
             </div>
         </div>

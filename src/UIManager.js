@@ -97,6 +97,25 @@ class UIManager {
             this.updateToggleState(this.btnBuffs, this.game.settings.showBuffs);
         });
 
+        this.btnDashboard = document.getElementById('btn-toggle-dashboard');
+        this.dashboardPanel = document.getElementById('company-dashboard');
+        this.dashboardEconomics = document.getElementById('dashboard-economics');
+        this.dashboardProduction = document.getElementById('dashboard-production');
+        this.dashboardPolicies = document.getElementById('dashboard-policies');
+        this.dashboardHappiness = document.getElementById('dashboard-happiness');
+
+        this.isDashboardVisible = false;
+
+        this.btnDashboard.addEventListener('click', () => {
+            this.isDashboardVisible = !this.isDashboardVisible;
+            if (this.isDashboardVisible) {
+                this.showDashboard();
+            } else {
+                this.hideDashboard();
+            }
+            this.updateToggleState(this.btnDashboard, this.isDashboardVisible);
+        });
+
         // Tab Navigation
         this.initTabNavigation();
 
@@ -133,6 +152,11 @@ class UIManager {
         if (this.salesDisplay) this.salesDisplay.textContent = Math.floor(kpis.sales_power);
 
         this.welfareDisplay.textContent = Math.floor(kpis.welfare);
+
+        // Update dashboard if visible
+        if (this.isDashboardVisible && this.dashboardPanel) {
+            this.updateDashboard();
+        }
     }
 
     showEventModal(title, desc, onClose) {
@@ -369,5 +393,104 @@ class UIManager {
 
         summaryHtml += '</ul>';
         summaryContainer.innerHTML = summaryHtml;
+    }
+
+    /**
+     * Show the company dashboard and update its content
+     */
+    showDashboard() {
+        this.updateDashboard();
+        this.dashboardPanel.classList.remove('hidden');
+    }
+
+    /**
+     * Update dashboard content with current data
+     */
+    updateDashboard() {
+        const summary = this.game.resourceManager.getDailySummary();
+
+        // Economics Section
+        const profit = summary.estimatedProfit;
+        const profitClass = profit >= 0 ? 'positive' : 'negative';
+        const profitIcon = profit >= 0 ? '🟢' : '🔴';
+
+        this.dashboardEconomics.innerHTML = `
+            <div class="metric-row">
+                <span class="metric-label">💸 Daily Salary:</span>
+                <span class="metric-value negative">-$${Math.floor(summary.totalSalary)}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">💰 Max Revenue:</span>
+                <span class="metric-value positive">+$${Math.floor(summary.maxRevenue)}</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">${profitIcon} Net Profit/Loss:</span>
+                <span class="metric-value ${profitClass}">${profit >= 0 ? '+' : ''}$${Math.floor(profit)}/day</span>
+            </div>
+        `;
+
+        // Production Section
+        this.dashboardProduction.innerHTML = `
+            <div class="metric-row">
+                <span class="metric-label">🔬 R&D Output:</span>
+                <span class="metric-value neutral">${Math.floor(summary.rdOutput)}/day</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">📦 Tech Stock:</span>
+                <span class="metric-value neutral">${Math.floor(summary.techStock)} units</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">📢 Sales Capacity:</span>
+                <span class="metric-value neutral">${Math.floor(summary.salesCapacity)}/day</span>
+            </div>
+            <div class="metric-row">
+                <span class="metric-label">👥 Employees:</span>
+                <span class="metric-value neutral">${summary.staffCount}</span>
+            </div>
+        `;
+
+        // Policies Section
+        if (summary.activePolicies.length > 0) {
+            let policiesHtml = '';
+            summary.activePolicies.forEach(policy => {
+                const className = policy.isPositive ? '' : ' negative';
+                policiesHtml += `<div class="policy-effect-item${className}">${policy.name}: ${policy.value}</div>`;
+            });
+            this.dashboardPolicies.innerHTML = policiesHtml;
+        } else {
+            this.dashboardPolicies.innerHTML = `<div class="no-policies">No active policies</div>`;
+        }
+
+        // Happiness Section
+        const happiness = Math.floor(summary.averageHappiness);
+        const happinessPercent = Math.min(100, Math.max(0, happiness));
+        let efficiencyText = '';
+        if (happiness < 50) {
+            const efficiency = Math.floor(Math.pow(happiness / 50, 2) * 100);
+            efficiencyText = `Low happiness reduces efficiency to ${efficiency}%`;
+        } else if (happiness > 50) {
+            const efficiency = Math.floor((1 + (happiness - 50) / 100) * 100);
+            efficiencyText = `High happiness boosts efficiency to ${efficiency}%`;
+        } else {
+            efficiencyText = `Normal efficiency (100%)`;
+        }
+
+        this.dashboardHappiness.innerHTML = `
+            <div class="metric-row">
+                <span class="metric-label">😊 Average Happiness:</span>
+                <span class="metric-value neutral">${happiness}/100</span>
+            </div>
+            <div class="happiness-bar">
+                <div class="happiness-fill" style="width: ${happinessPercent}%"></div>
+            </div>
+            <div class="efficiency-indicator">${efficiencyText}</div>
+        `;
+    }
+
+    /**
+     * Hide the company dashboard
+     */
+    hideDashboard() {
+        this.dashboardPanel.classList.add('hidden');
     }
 }

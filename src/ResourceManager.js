@@ -168,7 +168,7 @@ class ResourceManager {
     // Main calculation loop
     calculateFlows(gridManager) {
         // Reset flows
-        this.flows = { cash: 0, rd_power: 0, sales_power: 0, welfare: 0 };
+        this.flows = { cash: 0, rd_power: 0, sales_power: 0, welfare: 0, totalSalary: 0 };
         this.kpis.staff = 0;
 
         let totalHappiness = 0;
@@ -420,5 +420,85 @@ class ResourceManager {
 
         // Cap welfare
         this.kpis.welfare = Math.max(0, Math.min(100, this.kpis.welfare));
+    }
+
+    /**
+     * Get daily summary for dashboard display
+     * @returns {Object} Summary of daily operations
+     */
+    getDailySummary() {
+        // Calculate salary modifier
+        let salaryModifier = 1.0;
+        if (this.policies.competitive_salary.level > 0) {
+            salaryModifier = 1.5; // +50%
+        }
+
+        // Calculate max revenue (sales power * $2 per unit)
+        const unitPrice = 2;
+        const maxRevenue = this.flows.sales_power * unitPrice;
+
+        // Collect active policy effects
+        const policyEffects = [];
+
+        if (this.policies.responsibility_system.level > 0) {
+            const level = this.policies.responsibility_system.level;
+            policyEffects.push({
+                name: `R&D Output`,
+                value: `+${level * 30}%`,
+                isPositive: true
+            });
+            policyEffects.push({
+                name: `Global Happiness`,
+                value: `-${level * 5}`,
+                isPositive: false
+            });
+        }
+
+        if (this.policies.competitive_salary.level > 0) {
+            const level = this.policies.competitive_salary.level;
+            policyEffects.push({
+                name: `Salary Cost`,
+                value: `+50%`,
+                isPositive: false
+            });
+            policyEffects.push({
+                name: `Happiness`,
+                value: `Locked at Max`,
+                isPositive: true
+            });
+            policyEffects.push({
+                name: `Crit Chance`,
+                value: `+${level * 10}%`,
+                isPositive: true
+            });
+        }
+
+        if (this.policies.expansion.level > 0) {
+            policyEffects.push({
+                name: `Office Size`,
+                value: `+${this.policies.expansion.level * 2}`,
+                isPositive: true
+            });
+        }
+
+        return {
+            // Economics
+            totalSalary: this.flows.totalSalary || 0,
+            maxRevenue: maxRevenue,
+            estimatedProfit: maxRevenue - (this.flows.totalSalary || 0),
+
+            // Production
+            rdOutput: this.flows.rd_power || 0,
+            salesCapacity: this.flows.sales_power || 0,
+            techStock: this.kpis.tech || 0,
+
+            // Staff & Happiness
+            staffCount: this.kpis.staff || 0,
+            averageHappiness: this.kpis.welfare || 50,
+
+            // Policy Effects
+            activePolicies: policyEffects,
+            salaryModifier: salaryModifier
+        };
     }
 }
