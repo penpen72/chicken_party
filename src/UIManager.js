@@ -154,7 +154,12 @@ class UIManager {
         let statsHtml = '';
         if (def.stats.cost > 0) statsHtml += `<div class="stat-row"><span class="stat-label">Run Cost:</span><span class="stat-value">-$${def.stats.cost}/day</span></div>`;
         if (def.stats.rd > 0) statsHtml += `<div class="stat-row"><span class="stat-label">R&D Power:</span><span class="stat-value">+${def.stats.rd}</span></div>`;
-        if (def.stats.sales > 0) statsHtml += `<div class="stat-row"><span class="stat-label">Sales Power:</span><span class="stat-value">+${def.stats.sales}</span></div>`;
+        if (def.stats.sales > 0) {
+            statsHtml += `<div class="stat-row"><span class="stat-label">Sales Power:</span><span class="stat-value">+${def.stats.sales}</span></div>`;
+            // Show revenue potential (Sales Power * $2 per unit)
+            const maxRevenue = def.stats.sales * 2;
+            statsHtml += `<div class="stat-row"><span class="stat-label">Max Revenue:</span><span class="stat-value">+$${maxRevenue}/day (uses Tech)</span></div>`;
+        }
         if (def.stats.rep > 0) statsHtml += `<div class="stat-row"><span class="stat-label">Reputation:</span><span class="stat-value">+${def.stats.rep}</span></div>`;
         if (def.stats.welfare !== 0) statsHtml += `<div class="stat-row"><span class="stat-label">Happiness:</span><span class="stat-value">${def.stats.welfare > 0 ? '+' : ''}${def.stats.welfare}</span></div>`;
 
@@ -196,6 +201,9 @@ class UIManager {
         }
         if (def.stats.sales > 0) {
             statsHtml += `<div class="stat-row"><span class="stat-label">📢 Sales Power:</span><span class="stat-value">+${def.stats.sales}/day</span></div>`;
+            // Show revenue potential (Sales Power * $2 per unit)
+            const maxRevenue = def.stats.sales * 2;
+            statsHtml += `<div class="stat-row"><span class="stat-label">💰 Max Revenue:</span><span class="stat-value">+$${maxRevenue}/day (uses Tech)</span></div>`;
         }
         if (def.stats.rep > 0) {
             statsHtml += `<div class="stat-row"><span class="stat-label">📢 Reputation:</span><span class="stat-value">+${def.stats.rep}/day</span></div>`;

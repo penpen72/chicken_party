@@ -26,7 +26,11 @@ Staff units are the core workforce. They require a daily salary and have specifi
 *   **Salary**: $12/day
 *   **Stats**:
     *   Sales Power: 20
-*   **Description**: Converts Tech Stock into Cash. Essential for revenue.
+*   **Description**: Converts Tech Stock into Cash.
+*   **Conversion Details**:
+    *   **Rate**: 1 Sales Power converts **1 Tech Stock** into **$2**.
+    *   **Capacity**: A standard Sales unit (20 Power) can convert up to 20 Stock/day, generating a maximum of **$40 Revenue/day**.
+    *   **Constraint**: If Tech Stock is 0, Sales units generate $0 but still cost salary.
 
 ### 1.4 Project Manager (PM)
 *   **Role**: Support

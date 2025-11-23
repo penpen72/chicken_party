@@ -8,6 +8,7 @@ Detailed design documentation can be found in the `docs` directory:
 
 *   [Game Design & Core Mechanics](docs/GameDesign.md)
 *   [Unit & Policy Design](docs/UnitDesign.md)
+*   [UI & Interaction Design](docs/UIDesign.md)
 
 ## How to Play
 

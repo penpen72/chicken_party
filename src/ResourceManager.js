@@ -65,7 +65,7 @@ class ResourceManager {
             marketing: { // Sales
                 name: "Sales",
                 icon: "📢",
-                description: "Converts Tech Stock to Cash.",
+                description: "Converts Tech Stock to Cash ($2/unit). Max $40/day.",
                 cost: 150,
                 width: 1, height: 1,
                 stats: { cost: 12, rd: 0, sales: 20, welfare: 0, rep: 0, type: 'staff' }
