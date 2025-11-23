@@ -63,7 +63,7 @@ class SceneManager {
             meeting: new THREE.MeshStandardMaterial({ color: 0xa855f7 }),  // Purple
             senior_engineer: new THREE.MeshStandardMaterial({ color: 0x1e3a8a }), // Dark Blue
             pm: new THREE.MeshStandardMaterial({ color: 0x9333ea }), // Purple
-            manager_office: new THREE.MeshStandardMaterial({ color: 0xef4444 }), // Red
+            conference_room: new THREE.MeshStandardMaterial({ color: 0xa855f7 }), // Lighter Purple for Conference
             plant: new THREE.MeshStandardMaterial({ color: 0x22c55e }) // Green
         };
 
@@ -198,7 +198,7 @@ class SceneManager {
         let color = 0x10b981; // Default green
         if (unit.type === 'server') color = 0x3b82f6; // Blue
         else if (unit.type === 'pantry') color = 0xfacc15; // Yellow
-        else if (unit.type === 'manager_office') color = 0xef4444; // Red
+        else if (unit.type === 'conference_room') color = 0xa855f7; // Purple
 
         const material = new THREE.MeshBasicMaterial({
             color: color,
@@ -434,7 +434,7 @@ class SceneManager {
                     let color = 0xffffff;
                     if (unit.runtime.buffs.includes('pantry')) color = 0xfacc15; // Yellow
                     else if (unit.runtime.buffs.includes('server')) color = 0x10b981; // Green
-                    else if (unit.runtime.buffs.includes('manager')) color = 0xef4444; // Red
+                    else if (unit.runtime.buffs.includes('conference')) color = 0xa855f7; // Purple
 
                     const markerMat = new THREE.MeshBasicMaterial({ color: color });
                     const marker = new THREE.Mesh(markerGeo, markerMat);

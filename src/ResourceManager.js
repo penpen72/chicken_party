@@ -96,13 +96,13 @@ class ResourceManager {
                 stats: { cost: 5, rd: 0, sales: 0, welfare: 5, rep: 0, type: 'facility' },
                 effectRange: 2 // 6x6 (2 cell radius)
             },
-            manager_office: {
-                name: "Manager Office",
-                icon: "💼",
-                description: "Reduces Salary (-10%). Lowers Happiness (x2 Drop).",
+            conference_room: {
+                name: "Conference Room",
+                icon: "🤝",
+                description: "Accelerates any unit (+20% Efficiency).",
                 cost: 1000,
                 width: 2, height: 1,
-                stats: { cost: 0, rd: 0, sales: 0, welfare: -10, rep: 0, type: 'facility' },
+                stats: { cost: 0, rd: 0, sales: 0, welfare: 0, rep: 0, type: 'facility' },
                 effectRange: { left: 1, right: 1, top: 1, bottom: 1 } // 4x3 area (symmetric expansion)
             },
             plant: {
@@ -200,7 +200,7 @@ class ResourceManager {
                 const potentialNeighbors = gridManager.getNeighbors(unit.x, unit.y, 2); // Max range is 2 (Pantry)
 
                 let hasPantryBuff = false;
-                let hasManagerDebuff = false;
+                let hasConferenceBuff = false;
                 let hasServerBuff = false;
 
                 potentialNeighbors.forEach(n => {
@@ -264,7 +264,7 @@ class ResourceManager {
                             envMod -= 5; // Server noise
                             hasServerBuff = true;
                         }
-                        if (n.type === 'manager_office') hasManagerDebuff = true;
+                        if (n.type === 'conference_room') hasConferenceBuff = true;
                         if (n.type === 'plant') envMod += 2;
                         if (n.type === 'senior_engineer' && unit.type === 'engineer') envMod -= 5;
                     }
@@ -276,9 +276,8 @@ class ResourceManager {
                     envMod += 10;
                     unit.runtime.buffs.push('pantry');
                 }
-                if (hasManagerDebuff) {
-                    envMod -= 20;
-                    unit.runtime.buffs.push('manager');
+                if (hasConferenceBuff) {
+                    unit.runtime.buffs.push('conference');
                 }
                 if (hasServerBuff) {
                     unit.runtime.buffs.push('server');
@@ -305,6 +304,11 @@ class ResourceManager {
                     unit.runtime.efficiency = 1 + (unit.runtime.happiness - 50) / 100; // Bonus for > 50
                 }
 
+                // Conference Room Buff: +20% Efficiency
+                if (hasConferenceBuff) {
+                    unit.runtime.efficiency *= 1.2;
+                }
+
                 // Zombie Check
                 if (unit.runtime.efficiency < 0.1) {
                     unit.runtime.isZombie = true;
@@ -323,12 +327,7 @@ class ResourceManager {
             if (!def) return;
 
             // Costs are fixed (Zombie still gets paid)
-            // Manager Office reduces salary by 10%
             let salaryMod = 1.0;
-            // Check buffs stored in runtime
-            if (unit.runtime && unit.runtime.buffs && unit.runtime.buffs.includes('manager')) {
-                salaryMod = 0.9;
-            }
 
             // Policy: Competitive Salary -> +50% Salary
             if (this.policies.competitive_salary.level > 0) salaryMod += 0.5;
