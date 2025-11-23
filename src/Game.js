@@ -175,8 +175,10 @@ class Game {
                     width = def.width || 1;
                     height = def.height || 1;
                     // Determine range for highlight
-                    // Facilities usually have range 1 (3x3)
-                    if (def.stats.type === 'facility') {
+                    // Determine range for highlight
+                    if (def.effectRange) {
+                        range = def.effectRange;
+                    } else if (def.stats.type === 'facility') {
                         range = 1; // Default range for facilities
                     }
                 }
@@ -200,7 +202,9 @@ class Game {
                     gridPos.y = unit.y;
                     // Show range if facility
                     const def = this.resourceManager.unitDefinitions[unit.type];
-                    if (def && def.stats.type === 'facility') {
+                    if (def && def.effectRange) {
+                        range = def.effectRange;
+                    } else if (def && def.stats.type === 'facility') {
                         range = 1;
                     }
                 }

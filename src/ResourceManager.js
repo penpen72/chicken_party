@@ -83,24 +83,27 @@ class ResourceManager {
                 icon: "💾",
                 description: "Boosts neighbors' R&D (+50%). Noisy (-5 Happiness).",
                 cost: 500,
-                width: 2, height: 2,
-                stats: { cost: 20, rd: 0, sales: 0, welfare: -5, rep: 0, type: 'facility' }
+                width: 1, height: 1,
+                stats: { cost: 20, rd: 0, sales: 0, welfare: -5, rep: 0, type: 'facility' },
+                effectRange: 1 // 3x3
             },
             pantry: {
                 name: "Pantry",
                 icon: "☕",
-                description: "Restores Happiness (+2/day).",
+                description: "Restores Happiness (+2/day). Large Area.",
                 cost: 300,
                 width: 2, height: 2,
-                stats: { cost: 5, rd: 0, sales: 0, welfare: 5, rep: 0, type: 'facility' }
+                stats: { cost: 5, rd: 0, sales: 0, welfare: 5, rep: 0, type: 'facility' },
+                effectRange: 2 // 6x6 (2 cell radius)
             },
             manager_office: {
                 name: "Manager Office",
                 icon: "💼",
                 description: "Reduces Salary (-10%). Lowers Happiness (x2 Drop).",
                 cost: 1000,
-                width: 2, height: 2,
-                stats: { cost: 0, rd: 0, sales: 0, welfare: -10, rep: 0, type: 'facility' }
+                width: 2, height: 1,
+                stats: { cost: 0, rd: 0, sales: 0, welfare: -10, rep: 0, type: 'facility' },
+                effectRange: { left: 1, right: 1, top: 1, bottom: 1 } // 4x3 area (symmetric expansion)
             },
             plant: {
                 name: "Plant",
@@ -187,29 +190,99 @@ class ResourceManager {
                 staffCount++;
 
                 // Calculate Happiness
-                // Base 50 + Env + Policy (TODO) - Crowding
+                // Base 50 + Env + Policy - Crowding
                 let envMod = 0;
                 let crowding = gridManager.getNeighborCount(unit.x, unit.y, 1); // 3x3 area (range 1)
                 // Crowding penalty: -2 per neighbor
                 let crowdingPenalty = crowding * 2;
 
-                // Check neighbors for specific buffs/debuffs
                 const neighbors = gridManager.getNeighbors(unit.x, unit.y, 1);
+                const potentialNeighbors = gridManager.getNeighbors(unit.x, unit.y, 2); // Max range is 2 (Pantry)
 
-                // Unique buffs (prevent stacking if needed, but request says Pantry non-stacking)
                 let hasPantryBuff = false;
                 let hasManagerDebuff = false;
+                let hasServerBuff = false;
 
-                neighbors.forEach(n => {
-                    if (n.type === 'pantry') hasPantryBuff = true;
-                    if (n.type === 'server') envMod -= 5; // Server noise
-                    if (n.type === 'manager_office') hasManagerDebuff = true;
-                    if (n.type === 'plant') envMod += 2; // Plant buff
-                    if (n.type === 'senior_engineer' && unit.type === 'engineer') envMod -= 5; // Senior stress on Junior
+                potentialNeighbors.forEach(n => {
+                    const nDef = this.unitDefinitions[n.type];
+                    if (!nDef) return;
+
+                    // Check if 'unit' is in 'n's effect range
+                    let inRange = false;
+                    if (nDef.effectRange) {
+                        // Calculate 'n's effect bounds
+                        let rLeft = 1, rRight = 1, rTop = 1, rBottom = 1;
+                        if (typeof nDef.effectRange === 'object') {
+                            rLeft = nDef.effectRange.left;
+                            rRight = nDef.effectRange.right;
+                            rTop = nDef.effectRange.top;
+                            rBottom = nDef.effectRange.bottom;
+                        } else {
+                            const r = nDef.effectRange;
+                            rLeft = r; rRight = r; rTop = r; rBottom = r;
+                        }
+
+                        const nX = n.x;
+                        const nY = n.y;
+                        const nW = n.width || 1;
+                        const nH = n.height || 1;
+
+                        // Effect Area
+                        const minX = nX - rLeft;
+                        const maxX = nX + nW - 1 + rRight;
+                        const minY = nY - rTop;
+                        const maxY = nY + nH - 1 + rBottom;
+
+                        // Check intersection with 'unit'
+                        const uMinX = unit.x;
+                        const uMaxX = unit.x + (unit.width || 1) - 1;
+                        const uMinY = unit.y;
+                        const uMaxY = unit.y + (unit.height || 1) - 1;
+
+                        if (uMaxX >= minX && uMinX <= maxX && uMaxY >= minY && uMinY <= maxY) {
+                            inRange = true;
+                        }
+                    } else {
+                        // Default range 1 check (for non-facility interactions like Senior Engineer)
+                        if (n.type === 'senior_engineer' || n.type === 'plant') {
+                            const r = 1;
+                            const minX = n.x - r;
+                            const maxX = n.x + (n.width || 1) - 1 + r;
+                            const minY = n.y - r;
+                            const maxY = n.y + (n.height || 1) - 1 + r;
+                            const uMinX = unit.x; const uMaxX = unit.x + (unit.width || 1) - 1;
+                            const uMinY = unit.y; const uMaxY = unit.y + (unit.height || 1) - 1;
+                            if (uMaxX >= minX && uMinX <= maxX && uMaxY >= minY && uMinY <= maxY) {
+                                inRange = true;
+                            }
+                        }
+                    }
+
+                    if (inRange) {
+                        if (n.type === 'pantry') hasPantryBuff = true;
+                        if (n.type === 'server') {
+                            envMod -= 5; // Server noise
+                            hasServerBuff = true;
+                        }
+                        if (n.type === 'manager_office') hasManagerDebuff = true;
+                        if (n.type === 'plant') envMod += 2;
+                        if (n.type === 'senior_engineer' && unit.type === 'engineer') envMod -= 5;
+                    }
                 });
 
-                if (hasPantryBuff) envMod += 10;
-                if (hasManagerDebuff) envMod -= 20;
+                // Store buffs for visuals
+                unit.runtime.buffs = [];
+                if (hasPantryBuff) {
+                    envMod += 10;
+                    unit.runtime.buffs.push('pantry');
+                }
+                if (hasManagerDebuff) {
+                    envMod -= 20;
+                    unit.runtime.buffs.push('manager');
+                }
+                if (hasServerBuff) {
+                    unit.runtime.buffs.push('server');
+                }
 
                 // Policies
                 if (this.policies.responsibility_system.level > 0) {
@@ -252,8 +325,10 @@ class ResourceManager {
             // Costs are fixed (Zombie still gets paid)
             // Manager Office reduces salary by 10%
             let salaryMod = 1.0;
-            const neighbors = gridManager.getNeighbors(unit.x, unit.y, 1);
-            if (neighbors.some(n => n.type === 'manager_office')) salaryMod = 0.9;
+            // Check buffs stored in runtime
+            if (unit.runtime && unit.runtime.buffs && unit.runtime.buffs.includes('manager')) {
+                salaryMod = 0.9;
+            }
 
             // Policy: Competitive Salary -> +50% Salary
             if (this.policies.competitive_salary.level > 0) salaryMod += 0.5;
@@ -264,6 +339,8 @@ class ResourceManager {
             if (def.stats.type === 'staff') {
                 // Output scaled by efficiency
                 let efficiency = unit.runtime.efficiency;
+
+                const neighbors = gridManager.getNeighbors(unit.x, unit.y, 1);
 
                 // PM Buff: +10% efficiency to neighbors
                 if (neighbors.some(n => n.type === 'pm')) efficiency *= 1.1;
@@ -285,7 +362,9 @@ class ResourceManager {
                 if (def.stats.rd > 0) {
                     // Server Buff: +50% Tech (R&D)
                     let techMod = 1.0;
-                    if (neighbors.some(n => n.type === 'server')) techMod = 1.5;
+                    if (unit.runtime && unit.runtime.buffs && unit.runtime.buffs.includes('server')) {
+                        techMod = 1.5;
+                    }
 
                     this.flows.rd_power += def.stats.rd * efficiency * techMod * policyRdMod * critMod;
                 }

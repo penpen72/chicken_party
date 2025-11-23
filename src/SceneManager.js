@@ -48,6 +48,9 @@ class SceneManager {
         // Unit Meshes Map (id -> mesh)
         this.unitMeshes = new Map();
 
+        // Floor overlays for facility effect ranges
+        this.floorOverlays = new Map(); // unitId -> overlay mesh
+
         // Floating Texts
         this.floatingTexts = [];
 
@@ -148,12 +151,6 @@ class SceneManager {
         }
 
         // Position
-        // Grid pos is top-left of the unit? Or center?
-        // GridManager uses x,y as the "origin" cell.
-        // If 2x2, x,y is top-left. Center is x + 0.5, y + 0.5 (in grid units)
-        // Actually, gridToWorld returns center of cell x,y.
-        // So we need to offset by (w-1)/2 and (h-1)/2 cells.
-
         const pos = this.gridToWorld(unit.x, unit.y);
         const offsetX = (w - 1) * this.cellSize / 2;
         const offsetZ = (h - 1) * this.cellSize / 2;
@@ -167,6 +164,62 @@ class SceneManager {
 
         this.scene.add(mesh);
         this.unitMeshes.set(unit.id, mesh);
+
+        // Add floor overlay for facilities with effect range
+        this.addFloorOverlay(unit);
+    }
+
+    addFloorOverlay(unit) {
+        // Get unit definition to check effectRange
+        const unitDef = window.game ? window.game.resourceManager.unitDefinitions[unit.type] : null;
+        if (!unitDef || !unitDef.effectRange) return;
+
+        // Calculate effect area
+        let rLeft = 0, rRight = 0, rTop = 0, rBottom = 0;
+        if (typeof unitDef.effectRange === 'object') {
+            rLeft = unitDef.effectRange.left;
+            rRight = unitDef.effectRange.right;
+            rTop = unitDef.effectRange.top;
+            rBottom = unitDef.effectRange.bottom;
+        } else {
+            const r = unitDef.effectRange;
+            rLeft = r; rRight = r; rTop = r; rBottom = r;
+        }
+
+        const w = unit.width || 1;
+        const h = unit.height || 1;
+        const totalW = w + rLeft + rRight;
+        const totalH = h + rTop + rBottom;
+
+        // Create semi-transparent floor overlay
+        const geometry = new THREE.PlaneGeometry(totalW * this.cellSize, totalH * this.cellSize);
+
+        // Color based on unit type
+        let color = 0x10b981; // Default green
+        if (unit.type === 'server') color = 0x3b82f6; // Blue
+        else if (unit.type === 'pantry') color = 0xfacc15; // Yellow
+        else if (unit.type === 'manager_office') color = 0xef4444; // Red
+
+        const material = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.15,
+            side: THREE.DoubleSide
+        });
+        const overlay = new THREE.Mesh(geometry, material);
+        overlay.rotation.x = -Math.PI / 2;
+
+        // Position overlay
+        const pos = this.gridToWorld(unit.x, unit.y);
+        const offsetX = (w - 1) * this.cellSize / 2;
+        const offsetZ = (h - 1) * this.cellSize / 2;
+        const shiftX = (rRight - rLeft) * this.cellSize / 2;
+        const shiftZ = (rBottom - rTop) * this.cellSize / 2;
+
+        overlay.position.set(pos.x + offsetX + shiftX, 0.01, pos.z + offsetZ + shiftZ);
+
+        this.scene.add(overlay);
+        this.floorOverlays.set(unit.id, overlay);
     }
 
     removeUnitVisual(unit) {
@@ -174,6 +227,15 @@ class SceneManager {
         if (mesh) {
             this.scene.remove(mesh);
             this.unitMeshes.delete(unit.id);
+        }
+
+        // Remove floor overlay
+        const overlay = this.floorOverlays.get(unit.id);
+        if (overlay) {
+            this.scene.remove(overlay);
+            overlay.geometry.dispose();
+            overlay.material.dispose();
+            this.floorOverlays.delete(unit.id);
         }
     }
 
@@ -303,15 +365,42 @@ class SceneManager {
         this.highlightMesh.visible = true;
 
         // Update Range
-        if (range > 0) {
-            // Range is usually "radius" around the unit.
-            // Total width = unitWidth + 2*range
-            // Total height = unitHeight + 2*range
-            const rangeW = width + range * 2;
-            const rangeH = height + range * 2;
+        let rLeft = 0, rRight = 0, rTop = 0, rBottom = 0;
+        if (typeof range === 'object') {
+            rLeft = range.left || 0;
+            rRight = range.right || 0;
+            rTop = range.top || 0;
+            rBottom = range.bottom || 0;
+        } else if (range > 0) {
+            rLeft = range; rRight = range; rTop = range; rBottom = range;
+        }
 
-            this.rangeMesh.position.set(worldPos.x + offsetX, 0.02, worldPos.z + offsetZ);
-            this.rangeMesh.scale.set(rangeW * this.cellSize, rangeH * this.cellSize, 1);
+        if (rLeft > 0 || rRight > 0 || rTop > 0 || rBottom > 0) {
+            // Range Mesh needs to cover:
+            // Width: unitWidth + left + right
+            // Height: unitHeight + top + bottom
+            // Center Offset:
+            // X: (right - left) / 2 * cellSize
+            // Z: (bottom - top) / 2 * cellSize
+
+            const totalW = width + rLeft + rRight;
+            const totalH = height + rTop + rBottom;
+
+            // Calculate center of the range area relative to unit center
+            // Unit center is at worldPos + offsetX, worldPos + offsetZ
+            // Range area starts at unitX - left, unitY - top
+            // Range area center is start + total/2
+
+            // Let's do it relative to unit center
+            const shiftX = (rRight - rLeft) * this.cellSize / 2;
+            const shiftZ = (rBottom - rTop) * this.cellSize / 2;
+
+            this.rangeMesh.position.set(
+                worldPos.x + offsetX + shiftX,
+                0.02,
+                worldPos.z + offsetZ + shiftZ
+            );
+            this.rangeMesh.scale.set(totalW * this.cellSize, totalH * this.cellSize, 1);
             this.rangeMesh.visible = true;
         } else {
             this.rangeMesh.visible = false;
@@ -327,6 +416,31 @@ class SceneManager {
                 } else {
                     // Reset to original material
                     mesh.material = this.materials[unit.type] || this.materials.engineer;
+                }
+
+                // Visual Buffs (Simple particles or color tint? Let's use floating icons or just tint for now)
+                // Actually, let's add a child mesh for buffs if not present
+                // Or just tint the mesh slightly?
+                // Let's use a simple marker above the unit.
+
+                // Clear old markers
+                mesh.children.forEach(c => {
+                    if (c.userData.isBuffMarker) mesh.remove(c);
+                });
+
+                if (unit.runtime.buffs && unit.runtime.buffs.length > 0) {
+                    // Add marker
+                    const markerGeo = new THREE.SphereGeometry(0.2, 8, 8);
+                    let color = 0xffffff;
+                    if (unit.runtime.buffs.includes('pantry')) color = 0xfacc15; // Yellow
+                    else if (unit.runtime.buffs.includes('server')) color = 0x10b981; // Green
+                    else if (unit.runtime.buffs.includes('manager')) color = 0xef4444; // Red
+
+                    const markerMat = new THREE.MeshBasicMaterial({ color: color });
+                    const marker = new THREE.Mesh(markerGeo, markerMat);
+                    marker.position.set(0, 1.5, 0);
+                    marker.userData.isBuffMarker = true;
+                    mesh.add(marker);
                 }
             }
         });

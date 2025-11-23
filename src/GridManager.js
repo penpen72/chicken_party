@@ -77,26 +77,21 @@ class GridManager {
     }
 
     getNeighbors(x, y, range = 1) {
-        // For 1x1 unit at x,y: neighbors are within [x-range, x+range]
-        // For WxH unit at x,y: neighbors are within [x-range, x+W-1+range]
+        // Default symmetric range
+        return this.getNeighborsAsymmetric(x, y, range, range, range, range);
+    }
 
-        // But wait, this function is usually called FOR a unit.
-        // If we pass x,y of a unit, we need to know its size to find neighbors correctly?
-        // Or is this finding neighbors OF a point?
-        // Existing usage: unit.x, unit.y. 
-        // We should probably update this to accept width/height or pass the unit itself.
-        // For backward compatibility/simplicity, let's assume we are looking for neighbors of the unit at x,y.
-
+    getNeighborsAsymmetric(x, y, rLeft, rRight, rTop, rBottom) {
         const unit = this.getUnitAt(x, y);
         const w = unit ? unit.width : 1;
         const h = unit ? unit.height : 1;
 
-        const neighbors = new Set(); // Use Set to avoid duplicates
+        const neighbors = new Set();
 
-        const startX = x - range;
-        const endX = x + w - 1 + range;
-        const startY = y - range;
-        const endY = y + h - 1 + range;
+        const startX = x - rLeft;
+        const endX = x + w - 1 + rRight;
+        const startY = y - rTop;
+        const endY = y + h - 1 + rBottom;
 
         for (let dy = startY; dy <= endY; dy++) {
             for (let dx = startX; dx <= endX; dx++) {

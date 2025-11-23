@@ -3,6 +3,7 @@
 
 window.addEventListener('DOMContentLoaded', () => {
   const game = new Game();
+  window.game = game; // Expose for SceneManager
 
   const startBtn = document.getElementById('start-btn');
   const startScreen = document.getElementById('start-screen');
