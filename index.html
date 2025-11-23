@@ -76,69 +76,94 @@
                     <div id="preview-hint">💡 Click on grid to build</div>
                 </div>
 
-                <!-- Build Menu & Controls -->
-                <div class="controls-row">
-                    <div id="build-menu">
-                        <button class="build-btn" data-type="engineer">
-                            <span class="btn-icon">👓</span>
-                            <div class="btn-label">
-                                <span class="btn-name">Jr. Dev</span>
-                                <span class="btn-price">$100</span>
-                            </div>
-                        </button>
-                        <button class="build-btn" data-type="senior_engineer">
-                            <span class="btn-icon">👴</span>
-                            <div class="btn-label">
-                                <span class="btn-name">Sr. Dev</span>
-                                <span class="btn-price">$300</span>
-                            </div>
-                        </button>
-                        <button class="build-btn" data-type="marketing">
-                            <span class="btn-icon">📢</span>
-                            <div class="btn-label">
-                                <span class="btn-name">Sales</span>
-                                <span class="btn-price">$150</span>
-                            </div>
-                        </button>
-                        <button class="build-btn" data-type="pm">
-                            <span class="btn-icon">📅</span>
-                            <div class="btn-label">
-                                <span class="btn-name">PM</span>
-                                <span class="btn-price">$250</span>
-                            </div>
-                        </button>
-                        <button class="build-btn" data-type="server">
-                            <span class="btn-icon">💾</span>
-                            <div class="btn-label">
-                                <span class="btn-name">Server</span>
-                                <span class="btn-price">$500</span>
-                            </div>
-                        </button>
-                        <button class="build-btn" data-type="pantry">
-                            <span class="btn-icon">☕</span>
-                            <div class="btn-label">
-                                <span class="btn-name">Pantry</span>
-                                <span class="btn-price">$300</span>
-                            </div>
-                        </button>
-                        <button class="build-btn" data-type="manager_office">
-                            <span class="btn-icon">💼</span>
-                            <div class="btn-label">
-                                <span class="btn-name">Office</span>
-                                <span class="btn-price">$1000</span>
-                            </div>
-                        </button>
-                        <button class="build-btn" data-type="plant">
-                            <span class="btn-icon">🪴</span>
-                            <div class="btn-label">
-                                <span class="btn-name">Plant</span>
-                                <span class="btn-price">$50</span>
-                            </div>
-                        </button>
+                <!-- Tab Navigation -->
+                <div id="tab-nav">
+                    <button class="tab-btn active" data-tab="manpower">Manpower</button>
+                    <button class="tab-btn" data-tab="facilities">Facilities</button>
+                    <button class="tab-btn" data-tab="policies">Policies</button>
+                </div>
+
+                <!-- Tab Content Areas -->
+                <div id="tab-content">
+                    <!-- Manpower Tab -->
+                    <div id="tab-manpower" class="tab-pane active">
+                        <div class="build-menu">
+                            <button class="build-btn" data-type="engineer">
+                                <span class="btn-icon">👓</span>
+                                <div class="btn-label">
+                                    <span class="btn-name">Jr. Dev</span>
+                                    <span class="btn-price">$100</span>
+                                </div>
+                            </button>
+                            <button class="build-btn" data-type="senior_engineer">
+                                <span class="btn-icon">👴</span>
+                                <div class="btn-label">
+                                    <span class="btn-name">Sr. Dev</span>
+                                    <span class="btn-price">$300</span>
+                                </div>
+                            </button>
+                            <button class="build-btn" data-type="marketing">
+                                <span class="btn-icon">📢</span>
+                                <div class="btn-label">
+                                    <span class="btn-name">Sales</span>
+                                    <span class="btn-price">$150</span>
+                                </div>
+                            </button>
+                            <button class="build-btn" data-type="pm">
+                                <span class="btn-icon">📅</span>
+                                <div class="btn-label">
+                                    <span class="btn-name">PM</span>
+                                    <span class="btn-price">$250</span>
+                                </div>
+                            </button>
+                        </div>
                     </div>
-                    <div id="controls">
-                        <button id="delete-mode-btn">🗑️ Sell Mode</button>
+
+                    <!-- Facilities Tab -->
+                    <div id="tab-facilities" class="tab-pane">
+                        <div class="build-menu">
+                            <button class="build-btn" data-type="server">
+                                <span class="btn-icon">💾</span>
+                                <div class="btn-label">
+                                    <span class="btn-name">Server</span>
+                                    <span class="btn-price">$500</span>
+                                </div>
+                            </button>
+                            <button class="build-btn" data-type="pantry">
+                                <span class="btn-icon">☕</span>
+                                <div class="btn-label">
+                                    <span class="btn-name">Pantry</span>
+                                    <span class="btn-price">$300</span>
+                                </div>
+                            </button>
+                            <button class="build-btn" data-type="manager_office">
+                                <span class="btn-icon">💼</span>
+                                <div class="btn-label">
+                                    <span class="btn-name">Office</span>
+                                    <span class="btn-price">$1000</span>
+                                </div>
+                            </button>
+                            <button class="build-btn" data-type="plant">
+                                <span class="btn-icon">🪴</span>
+                                <div class="btn-label">
+                                    <span class="btn-name">Plant</span>
+                                    <span class="btn-price">$50</span>
+                                </div>
+                            </button>
+                        </div>
                     </div>
+
+                    <!-- Policies Tab -->
+                    <div id="tab-policies" class="tab-pane">
+                        <div id="policies-list">
+                            <!-- Policy Items injected by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Global Controls -->
+                <div id="controls">
+                    <button id="delete-mode-btn">🗑️ Sell Mode</button>
                 </div>
             </div>
 

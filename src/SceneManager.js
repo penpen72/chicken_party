@@ -42,6 +42,7 @@ class SceneManager {
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
         this.highlightMesh = null;
+        this.rangeMesh = null; // Range indicator
         this.createHighlightCursor();
 
         // Unit Meshes Map (id -> mesh)
@@ -64,8 +65,11 @@ class SceneManager {
         };
 
         this.geometries = {
-            box: new THREE.BoxGeometry(this.cellSize * 0.8, this.cellSize * 0.8, this.cellSize * 0.8)
+            box: new THREE.BoxGeometry(1, 1, 1), // Base size, will scale
+            cylinder: new THREE.CylinderGeometry(0.4, 0.4, 0.8, 32) // Staff
         };
+
+        this.staffTypes = ['engineer', 'senior_engineer', 'marketing', 'pm'];
 
         // Bind resize
         window.addEventListener('resize', () => this.onWindowResize());
@@ -95,12 +99,21 @@ class SceneManager {
     }
 
     createHighlightCursor() {
-        const geometry = new THREE.PlaneGeometry(this.cellSize, this.cellSize);
+        // Cursor
+        const geometry = new THREE.PlaneGeometry(1, 1); // Base size
         const material = new THREE.MeshBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.3, side: THREE.DoubleSide });
         this.highlightMesh = new THREE.Mesh(geometry, material);
         this.highlightMesh.rotation.x = -Math.PI / 2;
         this.highlightMesh.visible = false;
         this.scene.add(this.highlightMesh);
+
+        // Range Indicator
+        const rangeGeo = new THREE.PlaneGeometry(1, 1);
+        const rangeMat = new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.2, side: THREE.DoubleSide });
+        this.rangeMesh = new THREE.Mesh(rangeGeo, rangeMat);
+        this.rangeMesh.rotation.x = -Math.PI / 2;
+        this.rangeMesh.visible = false;
+        this.scene.add(this.rangeMesh);
     }
 
     gridToWorld(gx, gy) {
@@ -118,14 +131,39 @@ class SceneManager {
 
     addUnitVisual(unit) {
         const material = this.materials[unit.type] || this.materials.engineer; // Fallback
-        const mesh = new THREE.Mesh(this.geometries.box, material);
+        const isStaff = this.staffTypes.includes(unit.type);
+
+        let mesh;
+        const w = unit.width || 1;
+        const h = unit.height || 1;
+
+        if (isStaff) {
+            mesh = new THREE.Mesh(this.geometries.cylinder, material);
+            // Cylinder is 1x1 roughly
+            mesh.scale.set(this.cellSize, this.cellSize, this.cellSize);
+        } else {
+            mesh = new THREE.Mesh(this.geometries.box, material);
+            // Scale box to fit width/height
+            mesh.scale.set(w * this.cellSize * 0.9, 0.8 * this.cellSize, h * this.cellSize * 0.9);
+        }
+
+        // Position
+        // Grid pos is top-left of the unit? Or center?
+        // GridManager uses x,y as the "origin" cell.
+        // If 2x2, x,y is top-left. Center is x + 0.5, y + 0.5 (in grid units)
+        // Actually, gridToWorld returns center of cell x,y.
+        // So we need to offset by (w-1)/2 and (h-1)/2 cells.
+
         const pos = this.gridToWorld(unit.x, unit.y);
-        mesh.position.set(pos.x, this.cellSize / 2, pos.z);
+        const offsetX = (w - 1) * this.cellSize / 2;
+        const offsetZ = (h - 1) * this.cellSize / 2;
+
+        mesh.position.set(pos.x + offsetX, this.cellSize / 2, pos.z + offsetZ);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
 
         // Add simple animation data
-        mesh.userData = { yBase: mesh.position.y, offset: Math.random() * 100 };
+        mesh.userData = { yBase: mesh.position.y, offset: Math.random() * 100, isStaff: isStaff };
 
         this.scene.add(mesh);
         this.unitMeshes.set(unit.id, mesh);
@@ -145,7 +183,13 @@ class SceneManager {
         const sprite = new THREE.Sprite(material);
 
         const pos = this.gridToWorld(unit.x, unit.y);
-        sprite.position.set(pos.x, this.cellSize * 1.5, pos.z);
+        // Adjust for unit size
+        const w = unit.width || 1;
+        const h = unit.height || 1;
+        const offsetX = (w - 1) * this.cellSize / 2;
+        const offsetZ = (h - 1) * this.cellSize / 2;
+
+        sprite.position.set(pos.x + offsetX, this.cellSize * 1.5, pos.z + offsetZ);
         sprite.scale.set(3, 1.5, 1); // Adjust scale
 
         this.scene.add(sprite);
@@ -185,7 +229,10 @@ class SceneManager {
         // Animate units (bobbing)
         const time = Date.now() * 0.002;
         this.unitMeshes.forEach(mesh => {
-            mesh.position.y = mesh.userData.yBase + Math.sin(time + mesh.userData.offset) * 0.1;
+            if (mesh.userData.isStaff) {
+                // Only staff bob? Or everyone? Let's make everyone bob slightly, staff more.
+                mesh.position.y = mesh.userData.yBase + Math.sin(time + mesh.userData.offset) * 0.1;
+            }
         });
 
         // Animate Floating Texts
@@ -234,17 +281,41 @@ class SceneManager {
         if (intersects.length > 0) {
             const point = intersects[0].point;
             const gridPos = this.worldToGrid(point.x, point.z);
-
-            // Update Highlight
-            if (gridPos.x >= 0 && gridPos.x < this.gridWidth && gridPos.y >= 0 && gridPos.y < this.gridHeight) {
-                const worldPos = this.gridToWorld(gridPos.x, gridPos.y);
-                this.highlightMesh.position.set(worldPos.x, 0.05, worldPos.z);
-                this.highlightMesh.visible = true;
-                return gridPos;
-            }
+            return gridPos;
         }
-        this.highlightMesh.visible = false;
         return null;
+    }
+
+    updateHighlight(gridPos, width = 1, height = 1, range = 0) {
+        if (!gridPos || gridPos.x < 0 || gridPos.x >= this.gridWidth || gridPos.y < 0 || gridPos.y >= this.gridHeight) {
+            this.highlightMesh.visible = false;
+            this.rangeMesh.visible = false;
+            return;
+        }
+
+        // Update Cursor
+        const worldPos = this.gridToWorld(gridPos.x, gridPos.y);
+        const offsetX = (width - 1) * this.cellSize / 2;
+        const offsetZ = (height - 1) * this.cellSize / 2;
+
+        this.highlightMesh.position.set(worldPos.x + offsetX, 0.05, worldPos.z + offsetZ);
+        this.highlightMesh.scale.set(width * this.cellSize, height * this.cellSize, 1);
+        this.highlightMesh.visible = true;
+
+        // Update Range
+        if (range > 0) {
+            // Range is usually "radius" around the unit.
+            // Total width = unitWidth + 2*range
+            // Total height = unitHeight + 2*range
+            const rangeW = width + range * 2;
+            const rangeH = height + range * 2;
+
+            this.rangeMesh.position.set(worldPos.x + offsetX, 0.02, worldPos.z + offsetZ);
+            this.rangeMesh.scale.set(rangeW * this.cellSize, rangeH * this.cellSize, 1);
+            this.rangeMesh.visible = true;
+        } else {
+            this.rangeMesh.visible = false;
+        }
     }
 
     updateUnitVisuals(units) {

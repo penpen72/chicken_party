@@ -14,22 +14,34 @@ class GridManager {
         return x >= 0 && x < this.width && y >= 0 && y < this.height;
     }
 
-    isOccupied(x, y) {
-        if (!this.isValid(x, y)) return true;
-        return this.grid[this.getIndex(x, y)] !== null;
+    isOccupied(x, y, w = 1, h = 1) {
+        for (let dy = 0; dy < h; dy++) {
+            for (let dx = 0; dx < w; dx++) {
+                if (!this.isValid(x + dx, y + dy)) return true; // Out of bounds is "occupied"
+                if (this.grid[this.getIndex(x + dx, y + dy)] !== null) return true;
+            }
+        }
+        return false;
     }
 
-    placeUnit(x, y, type) {
-        if (this.isOccupied(x, y)) return false;
+    placeUnit(x, y, type, width = 1, height = 1) {
+        if (this.isOccupied(x, y, width, height)) return false;
 
         const unit = {
             id: Date.now() + Math.random(),
             type: type,
             x: x,
-            y: y
+            y: y,
+            width: width,
+            height: height
         };
 
-        this.grid[this.getIndex(x, y)] = unit;
+        for (let dy = 0; dy < height; dy++) {
+            for (let dx = 0; dx < width; dx++) {
+                this.grid[this.getIndex(x + dx, y + dy)] = unit;
+            }
+        }
+
         this.units.push(unit);
         return unit;
     }
@@ -40,7 +52,15 @@ class GridManager {
         const unit = this.grid[index];
 
         if (unit) {
-            this.grid[index] = null;
+            // Clear all cells occupied by this unit
+            for (let dy = 0; dy < unit.height; dy++) {
+                for (let dx = 0; dx < unit.width; dx++) {
+                    const idx = this.getIndex(unit.x + dx, unit.y + dy);
+                    if (this.grid[idx] === unit) {
+                        this.grid[idx] = null;
+                    }
+                }
+            }
             this.units = this.units.filter(u => u !== unit);
             return unit;
         }
@@ -57,35 +77,63 @@ class GridManager {
     }
 
     getNeighbors(x, y, range = 1) {
-        const neighbors = [];
-        for (let dy = -range; dy <= range; dy++) {
-            for (let dx = -range; dx <= range; dx++) {
-                if (dx === 0 && dy === 0) continue;
-                const nx = x + dx;
-                const ny = y + dy;
-                if (this.isValid(nx, ny)) {
-                    const unit = this.getUnitAt(nx, ny);
-                    if (unit) {
-                        neighbors.push(unit);
+        // For 1x1 unit at x,y: neighbors are within [x-range, x+range]
+        // For WxH unit at x,y: neighbors are within [x-range, x+W-1+range]
+
+        // But wait, this function is usually called FOR a unit.
+        // If we pass x,y of a unit, we need to know its size to find neighbors correctly?
+        // Or is this finding neighbors OF a point?
+        // Existing usage: unit.x, unit.y. 
+        // We should probably update this to accept width/height or pass the unit itself.
+        // For backward compatibility/simplicity, let's assume we are looking for neighbors of the unit at x,y.
+
+        const unit = this.getUnitAt(x, y);
+        const w = unit ? unit.width : 1;
+        const h = unit ? unit.height : 1;
+
+        const neighbors = new Set(); // Use Set to avoid duplicates
+
+        const startX = x - range;
+        const endX = x + w - 1 + range;
+        const startY = y - range;
+        const endY = y + h - 1 + range;
+
+        for (let dy = startY; dy <= endY; dy++) {
+            for (let dx = startX; dx <= endX; dx++) {
+                // Skip the unit's own cells
+                if (dx >= x && dx < x + w && dy >= y && dy < y + h) continue;
+
+                if (this.isValid(dx, dy)) {
+                    const neighbor = this.getUnitAt(dx, dy);
+                    if (neighbor && neighbor !== unit) {
+                        neighbors.add(neighbor);
                     }
                 }
             }
         }
-        return neighbors;
+        return Array.from(neighbors);
     }
 
     getNeighborCount(x, y, range = 1) {
+        // Similar logic to getNeighbors
+        const unit = this.getUnitAt(x, y);
+        const w = unit ? unit.width : 1;
+        const h = unit ? unit.height : 1;
+
         let count = 0;
-        for (let dy = -range; dy <= range; dy++) {
-            for (let dx = -range; dx <= range; dx++) {
-                if (dx === 0 && dy === 0) continue;
-                const nx = x + dx;
-                const ny = y + dy;
-                if (this.isValid(nx, ny) && this.isOccupied(nx, ny)) {
-                    count++;
-                }
-            }
-        }
-        return count;
+        // Note: This counts occupied CELLS or UNITS? 
+        // Previous implementation counted UNITS (if 1x1). 
+        // Actually previous implementation:
+        // if (this.isValid(nx, ny) && this.isOccupied(nx, ny)) count++;
+        // This counts occupied CELLS.
+        // For multi-tile units, this might double count the same neighbor unit if it occupies multiple cells in range.
+        // But "crowding" usually implies density.
+        // Let's stick to counting distinct UNITS for better balance with large units?
+        // Or stick to occupied cells? 
+        // "Crowding penalty: -2 per neighbor". If a 2x2 unit is next to you, is it 1 neighbor or 2-4?
+        // Let's count distinct UNITS.
+
+        const neighbors = this.getNeighbors(x, y, range);
+        return neighbors.length;
     }
 }

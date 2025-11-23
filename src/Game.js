@@ -45,6 +45,7 @@ class Game {
 
         // Bind Inputs
         window.addEventListener('mousedown', (e) => this.onMouseDown(e));
+        window.addEventListener('mousemove', (e) => this.onMouseMove(e));
     }
 
     loop(timestamp) {
@@ -158,6 +159,59 @@ class Game {
         });
     }
 
+    onMouseMove(e) {
+        if (this.isGameOver) return;
+
+        const gridPos = this.sceneManager.getGridPositionFromMouse(e.clientX, e.clientY);
+
+        if (gridPos) {
+            let width = 1;
+            let height = 1;
+            let range = 0;
+
+            if (this.selectedBuildType) {
+                const def = this.resourceManager.unitDefinitions[this.selectedBuildType];
+                if (def) {
+                    width = def.width || 1;
+                    height = def.height || 1;
+                    // Determine range for highlight
+                    // Facilities usually have range 1 (3x3)
+                    if (def.stats.type === 'facility') {
+                        range = 1; // Default range for facilities
+                    }
+                }
+            } else if (this.isDeleteMode) {
+                // Highlight unit under cursor
+                const unit = this.gridManager.getUnitAt(gridPos.x, gridPos.y);
+                if (unit) {
+                    width = unit.width || 1;
+                    height = unit.height || 1;
+                    // Snap gridPos to unit origin
+                    gridPos.x = unit.x;
+                    gridPos.y = unit.y;
+                }
+            } else {
+                // Inspect mode
+                const unit = this.gridManager.getUnitAt(gridPos.x, gridPos.y);
+                if (unit) {
+                    width = unit.width || 1;
+                    height = unit.height || 1;
+                    gridPos.x = unit.x;
+                    gridPos.y = unit.y;
+                    // Show range if facility
+                    const def = this.resourceManager.unitDefinitions[unit.type];
+                    if (def && def.stats.type === 'facility') {
+                        range = 1;
+                    }
+                }
+            }
+
+            this.sceneManager.updateHighlight(gridPos, width, height, range);
+        } else {
+            this.sceneManager.updateHighlight(null);
+        }
+    }
+
     onMouseDown(e) {
         if (this.isGameOver) return;
 
@@ -176,7 +230,11 @@ class Game {
         } else if (this.selectedBuildType) {
             // Try to build
             if (this.resourceManager.canAfford(this.selectedBuildType)) {
-                const unit = this.gridManager.placeUnit(gridPos.x, gridPos.y, this.selectedBuildType);
+                const def = this.resourceManager.unitDefinitions[this.selectedBuildType];
+                const w = def.width || 1;
+                const h = def.height || 1;
+
+                const unit = this.gridManager.placeUnit(gridPos.x, gridPos.y, this.selectedBuildType, w, h);
                 if (unit) {
                     this.resourceManager.deductCost(this.selectedBuildType);
                     this.sceneManager.addUnitVisual(unit);
