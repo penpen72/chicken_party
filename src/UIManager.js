@@ -272,37 +272,94 @@ class UIManager {
         for (const [key, policy] of Object.entries(policies)) {
             const policyItem = document.createElement('div');
             policyItem.className = 'policy-item';
-            if (policy.active) policyItem.classList.add('active');
+
+            // Check if maxed
+            const isMaxed = policy.level >= policy.maxLevel;
+            if (isMaxed) policyItem.classList.add('maxed');
+            if (policy.level > 0) policyItem.classList.add('active');
+
+            const nextCost = this.game.resourceManager.getPolicyCost(key);
 
             policyItem.innerHTML = `
                 <div class="policy-header">
-                    <span class="policy-name">${policy.name}</span>
-                    <span class="policy-cost">$${policy.cost}</span>
+                    <span class="policy-name">${policy.name} <span class="policy-level">LV ${policy.level}/${policy.maxLevel}</span></span>
+                    <span class="policy-cost">${isMaxed ? 'MAX' : '$' + nextCost}</span>
                 </div>
-                <div class="policy-desc">${policy.description || 'Improves company operations.'}</div>
-                <button class="policy-btn ${policy.active ? 'active' : ''}" data-policy="${key}">
-                    ${policy.active ? 'Active' : 'Activate'}
+                <div class="policy-desc">${policy.description}</div>
+                <button class="policy-btn ${isMaxed ? 'disabled' : ''}" data-policy="${key}" ${isMaxed ? 'disabled' : ''}>
+                    ${isMaxed ? 'Maxed Out' : (policy.level === 0 ? 'Activate' : 'Upgrade')}
                 </button>
             `;
 
             // Bind button click
             const btn = policyItem.querySelector('.policy-btn');
-            btn.addEventListener('click', () => {
-                if (policy.active) return; // Already active
+            if (!isMaxed) {
+                btn.addEventListener('click', () => {
+                    const result = this.game.resourceManager.activatePolicy(key);
+                    if (result.success) {
+                        this.game.soundManager.playBuildSound();
 
-                if (this.game.resourceManager.kpis.cash >= policy.cost) {
-                    this.game.resourceManager.kpis.cash -= policy.cost;
-                    policy.active = true;
-                    btn.textContent = 'Active';
-                    btn.classList.add('active');
-                    policyItem.classList.add('active');
-                    this.game.soundManager.playBuildSound();
-                } else {
-                    this.game.soundManager.playErrorSound();
-                }
-            });
+                        // Handle Expansion Special Case
+                        if (result.type === 'expansion') {
+                            this.game.expandGrid(result.level);
+                        }
+
+                        // Refresh UI
+                        this.initializePolicies();
+                        this.updatePolicySummary();
+                    } else {
+                        this.game.soundManager.playErrorSound();
+                    }
+                });
+            }
 
             policiesList.appendChild(policyItem);
         }
+
+        this.updatePolicySummary();
+    }
+
+    updatePolicySummary() {
+        // Create or update summary section
+        let summaryContainer = document.getElementById('policy-summary');
+        if (!summaryContainer) {
+            summaryContainer = document.createElement('div');
+            summaryContainer.id = 'policy-summary';
+            // Insert before policies list
+            const policiesList = document.getElementById('policies-list');
+            policiesList.parentNode.insertBefore(summaryContainer, policiesList);
+        }
+
+        const policies = this.game.resourceManager.policies;
+        let summaryHtml = '<h3>Active Effects</h3><ul class="policy-effects">';
+
+        let hasEffects = false;
+
+        if (policies.responsibility_system.level > 0) {
+            const level = policies.responsibility_system.level;
+            summaryHtml += `<li>R&D Output: +${(level * 30)}%</li>`;
+            summaryHtml += `<li>Global Happiness: -${(level * 5)}</li>`;
+            hasEffects = true;
+        }
+
+        if (policies.competitive_salary.level > 0) {
+            const level = policies.competitive_salary.level;
+            summaryHtml += `<li>Salary Cost: +50%</li>`;
+            summaryHtml += `<li>Happiness: Locked at Max</li>`;
+            summaryHtml += `<li>Crit Chance: +${(level * 10)}%</li>`;
+            hasEffects = true;
+        }
+
+        if (policies.expansion.level > 0) {
+            summaryHtml += `<li>Office Size: +${policies.expansion.level * 2}</li>`;
+            hasEffects = true;
+        }
+
+        if (!hasEffects) {
+            summaryHtml += `<li>No active policies.</li>`;
+        }
+
+        summaryHtml += '</ul>';
+        summaryContainer.innerHTML = summaryHtml;
     }
 }

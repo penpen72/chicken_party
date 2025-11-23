@@ -325,4 +325,18 @@ class Game {
         this.isDeleteMode = true;
         this.selectedBuildType = null;
     }
+
+    expandGrid(newLevel) {
+        // Base size 10x10. Each level adds +2 to width and height.
+        // Level 1 -> 12x12
+        // Level 5 -> 20x20
+        const baseSize = 10;
+        const newSize = baseSize + (newLevel * 2);
+
+        this.gridManager.resize(newSize, newSize);
+        this.sceneManager.resize(newSize, newSize);
+
+        this.soundManager.playBuildSound(); // Or a special sound
+        // Maybe show a notification?
+    }
 }

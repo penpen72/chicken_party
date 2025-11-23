@@ -331,4 +331,29 @@ class SceneManager {
             }
         });
     }
+    resize(gridWidth, gridHeight) {
+        this.gridWidth = gridWidth;
+        this.gridHeight = gridHeight;
+
+        // Remove old floor and grid helper
+        this.scene.remove(this.floor);
+        // Find grid helper (it doesn't have a specific property reference other than being in scene)
+        // We can find it by type or store it.
+        // In createGridVisuals, we didn't store it on 'this'. Let's fix that or find it.
+        // Actually, let's just clear and recreate.
+
+        // Better: Store gridHelper in constructor/createGridVisuals
+        // Since I can't easily modify constructor without reloading file, I'll find it.
+        const helpers = this.scene.children.filter(c => c.type === 'GridHelper');
+        helpers.forEach(h => this.scene.remove(h));
+
+        // Recreate visuals
+        this.createGridVisuals();
+
+        // Update Camera?
+        // Camera sees the whole scene, might need to zoom out if grid gets huge.
+        // But user can scroll/zoom (not implemented yet). 
+        // For now, let's keep camera as is, or maybe adjust if it gets too big.
+        // Let's keep it simple.
+    }
 }

@@ -19,8 +19,30 @@ class ResourceManager {
         };
 
         this.policies = {
-            responsibility_system: { active: false, cost: 5000, kpiCost: 100, name: "Responsibility System" },
-            competitive_salary: { active: false, cost: 2000, name: "Competitive Salary" }
+            responsibility_system: {
+                id: 'responsibility_system',
+                level: 0,
+                maxLevel: 5,
+                baseCost: 5000,
+                name: "Responsibility System",
+                description: "Engineers work harder (+30% R&D/Level). Happiness -5/Level."
+            },
+            competitive_salary: {
+                id: 'competitive_salary',
+                level: 0,
+                maxLevel: 5,
+                baseCost: 2000,
+                name: "Competitive Salary",
+                description: "Salary +50%. Happiness locked at Max. Crit Chance +10%/Level."
+            },
+            expansion: {
+                id: 'expansion',
+                level: 0,
+                maxLevel: 5,
+                baseCost: 10000,
+                name: "Office Expansion",
+                description: "Expand office space by +2x2."
+            }
         };
 
         this.unitDefinitions = {
@@ -115,20 +137,29 @@ class ResourceManager {
         this.kpis.cash += Math.floor(this.buildCosts[type] * 0.5);
     }
 
+    getPolicyCost(policyKey) {
+        const policy = this.policies[policyKey];
+        if (!policy) return 0;
+        // Cost scaling: Base * (Level + 1)
+        return policy.baseCost * (policy.level + 1);
+    }
+
     activatePolicy(policyKey) {
         const policy = this.policies[policyKey];
-        if (!policy || policy.active) return false;
+        if (!policy) return { success: false };
 
-        let cost = policy.cost;
-        if (policy.kpiCost && this.kpis.tech < policy.kpiCost) return false; // Assuming KPI cost is Tech Stock? Or new KPI? Request says "100 KPI". Let's assume Tech.
+        if (policy.level >= policy.maxLevel) return { success: false, reason: 'max_level' };
+
+        const cost = this.getPolicyCost(policyKey);
 
         if (this.kpis.cash >= cost) {
             this.kpis.cash -= cost;
-            if (policy.kpiCost) this.kpis.tech -= policy.kpiCost;
-            policy.active = true;
-            return true;
+            policy.level++;
+
+            // Return type for special handling (like expansion)
+            return { success: true, type: policyKey, level: policy.level };
         }
-        return false;
+        return { success: false, reason: 'no_cash' };
     }
 
     // Main calculation loop
@@ -177,52 +208,15 @@ class ResourceManager {
                     if (n.type === 'senior_engineer' && unit.type === 'engineer') envMod -= 5; // Senior stress on Junior
                 });
 
-                if (hasPantryBuff) envMod += 2; // Pantry: +2 Happiness/day (interpreted as +2 base happiness or recovery? Request says "per day". Let's add to base for simplicity or flow?)
-                // Request: "只要範圍內有「任何員工」，每人 +2 幸福度/天" -> This sounds like a flow, but happiness is usually a state. 
-                // If it's +2/day, it means happiness increases over time. 
-                // Current model: Happiness is calculated every frame based on environment. 
-                // To support "+2/day", we might need to change happiness to be cumulative or just a static boost.
-                // "Base 50 + Env". If I add 2 to Env, it's a permanent +2 as long as they are there. 
-                // Let's treat it as a static boost for now to fit the model, or I need to change the model to accumulate happiness.
-                // Given "lowers happiness speed doubled" for Manager, it implies happiness changes over time.
-                // But currently: unit.runtime.happiness = Math.max(0, Math.min(100, 50 + envMod - crowdingPenalty));
-                // This is static.
-                // To support dynamic happiness, I should store happiness and modify it by delta.
-                // But for this step, let's stick to the static model unless I rewrite the whole happiness system.
-                // "Happiness drops speed doubled" -> Manager Office.
-                // "Responsibility System: Daily happiness -5".
-                // It seems the user wants a dynamic happiness system.
-                // Current system is static.
-                // I will switch to a dynamic system: Happiness += (Target - Current) * Factor * dt? Or just Happiness += Rate * dt?
-                // Let's stick to static for "Environment" but maybe add a "Trend" that modifies it?
-                // Or just interpret "+2/day" as "+2 to base happiness" for simplicity in this prototype.
-                // Re-reading: "Happiness locked at max" (Competitive Salary).
-                // "Happiness drop speed doubled" (Manager).
-                // This strongly implies dynamic happiness.
-                // I'll try to adapt the static model to be "Target Happiness" and move towards it?
-                // Or just add a "Happiness Modifier" to the static calculation.
-                // Let's interpret "+2/day" as a strong buff, say +10 static.
-                // And "Happiness drop speed" -> maybe just a penalty -10 static.
-                // "Responsibility System: -5/day" -> -25 static.
-                // This is an abstraction.
-
-                // Let's try to implement "Target Happiness" and "Current Happiness" approach if I can.
-                // But `unit.runtime.happiness` is recalculated every frame currently.
-                // I will change it to: `targetHappiness = 50 + envMod`. `currentHappiness` moves towards target?
-                // No, the current code sets it directly.
-                // I will keep it static for now to avoid breaking everything, but map the "daily" values to static modifiers.
-                // +2/day -> +10 Static (Arbitrary scaling)
-                // -5/day -> -25 Static
-                // Manager Office: "Happiness drop speed doubled" -> This is hard in static. I'll just give a big penalty, say -20.
-
                 if (hasPantryBuff) envMod += 10;
                 if (hasManagerDebuff) envMod -= 20;
 
                 // Policies
-                if (this.policies.responsibility_system.active) {
-                    envMod -= 25; // -5/day equivalent
+                if (this.policies.responsibility_system.level > 0) {
+                    // -5 per level
+                    envMod -= 5 * this.policies.responsibility_system.level;
                 }
-                if (this.policies.competitive_salary.active) {
+                if (this.policies.competitive_salary.level > 0) {
                     unit.runtime.happiness = 100; // Locked at max
                 } else {
                     unit.runtime.happiness = Math.max(0, Math.min(100, 50 + envMod - crowdingPenalty));
@@ -262,7 +256,7 @@ class ResourceManager {
             if (neighbors.some(n => n.type === 'manager_office')) salaryMod = 0.9;
 
             // Policy: Competitive Salary -> +50% Salary
-            if (this.policies.competitive_salary.active) salaryMod += 0.5;
+            if (this.policies.competitive_salary.level > 0) salaryMod += 0.5;
 
             const salary = def.stats.cost * salaryMod;
             totalSalary += salary;
@@ -274,20 +268,17 @@ class ResourceManager {
                 // PM Buff: +10% efficiency to neighbors
                 if (neighbors.some(n => n.type === 'pm')) efficiency *= 1.1;
 
-                // Policy: Responsibility System -> +30% R&D (Engineer only?) "All Engineers R&D +30%"
+                // Policy: Responsibility System -> +30% R&D per level
                 let policyRdMod = 1.0;
-                if (this.policies.responsibility_system.active && (unit.type === 'engineer' || unit.type === 'senior_engineer')) {
-                    policyRdMod = 1.3;
+                if (this.policies.responsibility_system.level > 0 && (unit.type === 'engineer' || unit.type === 'senior_engineer')) {
+                    policyRdMod = 1 + (0.3 * this.policies.responsibility_system.level);
                 }
 
-                // Policy: Competitive Salary -> Chance for Crit (x2). 
-                // We can simulate this as average output increase? Or actual random crit?
-                // "Chance to trigger crit". Let's say 20% chance for x2 -> 1.2x average.
-                // Or I can implement randomness in `tick`. But `calculateFlows` is usually for rates.
-                // Let's add a multiplier for average flow.
+                // Policy: Competitive Salary -> Crit Chance
+                // We simulate this as average boost: +10% per level
                 let critMod = 1.0;
-                if (this.policies.competitive_salary.active) {
-                    critMod = 1.2; // Average boost
+                if (this.policies.competitive_salary.level > 0) {
+                    critMod = 1 + (0.1 * this.policies.competitive_salary.level);
                 }
 
                 // R&D Production

@@ -136,4 +136,44 @@ class GridManager {
         const neighbors = this.getNeighbors(x, y, range);
         return neighbors.length;
     }
+    resize(newWidth, newHeight) {
+        const oldGrid = this.grid;
+        const oldWidth = this.width;
+        const oldHeight = this.height;
+
+        this.width = newWidth;
+        this.height = newHeight;
+        this.grid = new Array(newWidth * newHeight).fill(null);
+
+        // Re-place existing units
+        // Note: We only need to move units that are still within bounds (which they should be if we are expanding)
+        // If shrinking, we might lose units. But we only expand.
+
+        // We iterate through the units list, which is safer than the grid
+        // However, we need to clear the grid first (done above) and re-place them.
+
+        // Important: We must NOT change unit.x/y unless we want to center them?
+        // Usually expansion adds space to the right/bottom. So (0,0) stays (0,0).
+        // So we just re-place them at their existing coordinates.
+
+        const unitsToKeep = [];
+
+        this.units.forEach(unit => {
+            // Check if unit fits in new grid
+            if (unit.x + unit.width <= newWidth && unit.y + unit.height <= newHeight) {
+                // Re-place in grid
+                for (let dy = 0; dy < unit.height; dy++) {
+                    for (let dx = 0; dx < unit.width; dx++) {
+                        this.grid[this.getIndex(unit.x + dx, unit.y + dy)] = unit;
+                    }
+                }
+                unitsToKeep.push(unit);
+            } else {
+                // Unit is out of bounds (if shrinking), it is lost.
+                // In expansion, this shouldn't happen.
+            }
+        });
+
+        this.units = unitsToKeep;
+    }
 }
