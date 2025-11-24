@@ -26,6 +26,8 @@
 
         <!-- UI Overlay -->
         <div id="ui-layer">
+            <div id="panel-backdrop" class="panel-backdrop"></div>
+
             <!-- Start Screen -->
             <div id="start-screen"
                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 200; color: white; pointer-events: auto;">
@@ -63,7 +65,7 @@
                 <!-- Purchase Preview Panel (Above build menu) -->
                 <div id="purchase-preview-panel" class="hidden">
                     <div class="preview-header">
-                        <div id="preview-icon">�️</div>
+                        <div id="preview-icon">🏗️</div>
                         <div id="preview-name">Unit Name</div>
                         <div class="cost-value" id="preview-cost">$0</div>
                     </div>
@@ -158,7 +160,7 @@
 
                         <!-- Policies Tab -->
                         <div id="tab-policies" class="tab-pane">
-                            <div id="policies-list">
+                            <div id="policies-list" class="build-menu">
                                 <!-- Policy Items injected by JS -->
                             </div>
                         </div>
@@ -188,6 +190,22 @@
                 <div id="unit-stats">
                     <!-- Stats will be injected here -->
                 </div>
+            </div>
+
+            <!-- Policy Info Panel -->
+            <div id="policy-info-panel" class="hidden">
+                <div class="policy-header">
+                    <div id="policy-icon">📋</div>
+                    <div id="policy-name">Policy Name</div>
+                    <div class="policy-level-badge" id="policy-level">LV 1</div>
+                </div>
+                <div id="policy-desc">Description goes here...</div>
+                <div id="policy-stats">
+                    <!-- Stats will be injected here -->
+                </div>
+                <button id="policy-upgrade-btn" class="policy-upgrade-button">
+                    Upgrade ($<span id="policy-cost">5000</span>)
+                </button>
             </div>
 
             <!-- Company Dashboard Panel -->

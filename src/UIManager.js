@@ -32,6 +32,24 @@ class UIManager {
         this.previewCost = document.getElementById('preview-cost');
         this.previewStats = document.getElementById('preview-stats');
 
+        // Policy Info Panel
+        this.policyInfoPanel = document.getElementById('policy-info-panel');
+        this.policyIcon = document.getElementById('policy-icon');
+        this.policyName = document.getElementById('policy-name');
+        this.policyDesc = document.getElementById('policy-desc');
+        this.policyStats = document.getElementById('policy-stats');
+        this.policyLevel = document.getElementById('policy-level');
+        this.policyCost = document.getElementById('policy-cost');
+        this.policyUpgradeBtn = document.getElementById('policy-upgrade-btn');
+
+        if (this.policyUpgradeBtn) {
+            this.policyUpgradeBtn.addEventListener('click', () => {
+                if (this.currentPolicyKey) {
+                    this.upgradePolicy(this.currentPolicyKey);
+                }
+            });
+        }
+
         // Backdrop for mobile
         this.panelBackdrop = document.getElementById('panel-backdrop');
 
@@ -300,6 +318,9 @@ class UIManager {
         deleteModeBtn.classList.remove('active');
         this.game.selectedBuildType = null;
         this.game.isDeleteMode = false;
+
+        // Hide policy info when switching tabs
+        this.hidePolicyInfo();
     }
 
     /**
@@ -312,97 +333,97 @@ class UIManager {
         policiesList.innerHTML = ''; // Clear existing content
 
         for (const [key, policy] of Object.entries(policies)) {
-            const policyItem = document.createElement('div');
-            policyItem.className = 'policy-item';
+            const btn = document.createElement('button');
+            btn.className = 'build-btn policy-btn-item'; // Use build-btn style
+            if (policy.level > 0) btn.classList.add('active-policy');
 
-            // Check if maxed
-            const isMaxed = policy.level >= policy.maxLevel;
-            if (isMaxed) policyItem.classList.add('maxed');
-            if (policy.level > 0) policyItem.classList.add('active');
+            btn.dataset.policy = key;
 
-            const nextCost = this.game.resourceManager.getPolicyCost(key);
-
-            policyItem.innerHTML = `
-                <div class="policy-header">
-                    <span class="policy-name">${policy.name} <span class="policy-level">LV ${policy.level}/${policy.maxLevel}</span></span>
-                    <span class="policy-cost">${isMaxed ? 'MAX' : '$' + nextCost}</span>
+            btn.innerHTML = `
+                <span class="btn-icon">${policy.icon}</span>
+                <div class="btn-label">
+                    <span class="btn-name">${policy.shortName}</span>
+                    <span class="btn-price btn-level">LV ${policy.level}</span>
                 </div>
-                <div class="policy-desc">${policy.description}</div>
-                <button class="policy-btn ${isMaxed ? 'disabled' : ''}" data-policy="${key}" ${isMaxed ? 'disabled' : ''}>
-                    ${isMaxed ? 'Maxed Out' : (policy.level === 0 ? 'Activate' : 'Upgrade')}
-                </button>
             `;
 
-            // Bind button click
-            const btn = policyItem.querySelector('.policy-btn');
-            if (!isMaxed) {
-                btn.addEventListener('click', () => {
-                    const result = this.game.resourceManager.activatePolicy(key);
-                    if (result.success) {
-                        this.game.soundManager.playBuildSound();
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.policy-btn-item').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
 
-                        // Handle Expansion Special Case
-                        if (result.type === 'expansion') {
-                            this.game.expandGrid(result.level);
-                        }
+                this.showPolicyInfo(key);
+                e.stopPropagation();
+            });
 
-                        // Refresh UI
-                        this.initializePolicies();
-                        this.updatePolicySummary();
-                    } else {
-                        this.game.soundManager.playErrorSound();
-                    }
-                });
-            }
-
-            policiesList.appendChild(policyItem);
+            policiesList.appendChild(btn);
         }
-
-        this.updatePolicySummary();
     }
 
-    updatePolicySummary() {
-        // Create or update summary section
-        let summaryContainer = document.getElementById('policy-summary');
-        if (!summaryContainer) {
-            summaryContainer = document.createElement('div');
-            summaryContainer.id = 'policy-summary';
-            // Insert before policies list
-            const policiesList = document.getElementById('policies-list');
-            policiesList.parentNode.insertBefore(summaryContainer, policiesList);
+    showPolicyInfo(policyKey) {
+        this.currentPolicyKey = policyKey;
+        const policy = this.game.resourceManager.policies[policyKey];
+        if (!policy) return;
+
+        this.policyIcon.textContent = policy.icon;
+        this.policyName.textContent = policy.name;
+        this.policyDesc.textContent = policy.description;
+        this.policyLevel.textContent = `LV ${policy.level}/${policy.maxLevel}`;
+
+        const nextCost = this.game.resourceManager.getPolicyCost(policyKey);
+
+        // Update button state
+        const isMaxed = policy.level >= policy.maxLevel;
+        if (isMaxed) {
+            this.policyUpgradeBtn.disabled = true;
+            this.policyUpgradeBtn.innerHTML = 'Maxed Out';
+        } else {
+            this.policyUpgradeBtn.disabled = false;
+            this.policyUpgradeBtn.innerHTML = `Upgrade ($<span id="policy-cost">${nextCost}</span>)`;
         }
 
-        const policies = this.game.resourceManager.policies;
-        let summaryHtml = '<h3>Active Effects</h3><ul class="policy-effects">';
+        // Stats/Effects
+        let statsHtml = '';
 
-        let hasEffects = false;
-
-        if (policies.responsibility_system.level > 0) {
-            const level = policies.responsibility_system.level;
-            summaryHtml += `<li>R&D Output: +${(level * 30)}%</li>`;
-            summaryHtml += `<li>Global Happiness: -${(level * 5)}</li>`;
-            hasEffects = true;
+        if (policyKey === 'responsibility_system') {
+            statsHtml += `<div class="stat-row"><span class="stat-label">R&D Output:</span><span class="stat-value">+${(policy.level + 1) * 30}% (Next Level)</span></div>`;
+            statsHtml += `<div class="stat-row"><span class="stat-label">Happiness:</span><span class="stat-value">-${(policy.level + 1) * 5} (Next Level)</span></div>`;
+        } else if (policyKey === 'competitive_salary') {
+            statsHtml += `<div class="stat-row"><span class="stat-label">Salary:</span><span class="stat-value">+50%</span></div>`;
+            statsHtml += `<div class="stat-row"><span class="stat-label">Crit Chance:</span><span class="stat-value">+${(policy.level + 1) * 10}% (Next Level)</span></div>`;
+        } else if (policyKey === 'expansion') {
+            statsHtml += `<div class="stat-row"><span class="stat-label">Office Size:</span><span class="stat-value">+2x2 (Next Level)</span></div>`;
         }
 
-        if (policies.competitive_salary.level > 0) {
-            const level = policies.competitive_salary.level;
-            summaryHtml += `<li>Salary Cost: +50%</li>`;
-            summaryHtml += `<li>Happiness: Locked at Max</li>`;
-            summaryHtml += `<li>Crit Chance: +${(level * 10)}%</li>`;
-            hasEffects = true;
-        }
+        this.policyStats.innerHTML = statsHtml;
+        this.policyInfoPanel.classList.remove('hidden');
+    }
 
-        if (policies.expansion.level > 0) {
-            summaryHtml += `<li>Office Size: +${policies.expansion.level * 2}</li>`;
-            hasEffects = true;
+    hidePolicyInfo() {
+        if (this.policyInfoPanel) {
+            this.policyInfoPanel.classList.add('hidden');
         }
+        this.currentPolicyKey = null;
+        document.querySelectorAll('.policy-btn-item').forEach(b => b.classList.remove('selected'));
+    }
 
-        if (!hasEffects) {
-            summaryHtml += `<li>No active policies.</li>`;
+    upgradePolicy(key) {
+        const result = this.game.resourceManager.activatePolicy(key);
+        if (result.success) {
+            this.game.soundManager.playBuildSound();
+            if (result.type === 'expansion') {
+                this.game.expandGrid(result.level);
+            }
+            this.initializePolicies(); // Refresh buttons
+            this.showPolicyInfo(key); // Refresh panel
+
+            // Re-select the button
+            const newBtn = document.querySelector(`.policy-btn-item[data-policy="${key}"]`);
+            if (newBtn) newBtn.classList.add('selected');
+
+            if (this.isDashboardVisible) this.updateDashboard();
+        } else {
+            this.game.soundManager.playErrorSound();
         }
-
-        summaryHtml += '</ul>';
-        summaryContainer.innerHTML = summaryHtml;
     }
 
     /**

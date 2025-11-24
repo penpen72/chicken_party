@@ -225,6 +225,7 @@ class Game {
             // Clicked outside grid - hide preview and unit info
             this.uiManager.hidePurchasePreview();
             this.uiManager.hideUnitInfo();
+            this.uiManager.hidePolicyInfo();
             return;
         }
 
@@ -264,9 +265,11 @@ class Game {
             if (unit) {
                 this.uiManager.showUnitInfo(unit.type);
                 this.soundManager.playEventSound(); // Or a specific select sound
+                this.uiManager.hidePolicyInfo();
             } else {
                 // Clicked empty cell - hide both panels
                 this.uiManager.hideUnitInfo();
+                this.uiManager.hidePolicyInfo();
             }
             // Always hide purchase preview in inspect mode
             this.uiManager.hidePurchasePreview();

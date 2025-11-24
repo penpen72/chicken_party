@@ -25,6 +25,8 @@ class ResourceManager {
                 maxLevel: 5,
                 baseCost: 5000,
                 name: "Responsibility System",
+                shortName: "責任制",
+                icon: "📋",
                 description: "Engineers work harder (+30% R&D/Level). Happiness -5/Level."
             },
             competitive_salary: {
@@ -33,6 +35,8 @@ class ResourceManager {
                 maxLevel: 5,
                 baseCost: 2000,
                 name: "Competitive Salary",
+                shortName: "高薪",
+                icon: "💰",
                 description: "Salary +50%. Happiness locked at Max. Crit Chance +10%/Level."
             },
             expansion: {
@@ -41,6 +45,8 @@ class ResourceManager {
                 maxLevel: 5,
                 baseCost: 10000,
                 name: "Office Expansion",
+                shortName: "擴建",
+                icon: "📐",
                 description: "Expand office space by +2x2."
             }
         };
