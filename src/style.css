@@ -319,25 +319,25 @@ body {
 
 #build-row {
   display: flex;
-  align-items: stretch;
-  gap: 10px;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   width: 100%;
-  justify-content: center;
 }
 
 
 #delete-mode-btn {
-  background: var(--danger-color);
+  background: linear-gradient(135deg, var(--danger-color) 0%, #cc3333 100%);
   color: white;
-  border: none;
-  padding: 12px 18px;
+  border: 2px solid rgba(255, 68, 68, 0.5);
+  padding: 12px 24px;
   border-radius: 10px;
   cursor: pointer;
   font-weight: 700;
   transition: all 0.3s ease;
-  align-self: stretch;
-  min-width: 140px;
-  box-shadow: 0 10px 25px rgba(255, 68, 68, 0.2);
+  min-width: 160px;
+  max-width: 200px;
+  box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
 }
 
 .sell-mode-btn {
@@ -934,6 +934,15 @@ body {
 
 .metric-value.neutral {
   color: var(--accent-color);
+}
+
+/* Dashboard Section Headers */
+.dashboard-content h3 {
+  font-size: 1.1rem;
+  color: var(--accent-color);
+  margin-bottom: 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #444;
 }
 
 .policy-effect-item {

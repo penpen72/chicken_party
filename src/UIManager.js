@@ -281,13 +281,23 @@ class UIManager {
             }
         });
 
+        // Show/hide Sell Mode button based on tab
+        const deleteModeBtn = document.getElementById('delete-mode-btn');
+        if (tabName === 'policies') {
+            // Hide Sell Mode button in Policies tab (policies can't be deleted)
+            deleteModeBtn.style.display = 'none';
+        } else {
+            // Show Sell Mode button in Manpower and Facilities tabs
+            deleteModeBtn.style.display = 'flex';
+        }
+
         // Hide preview panel when switching tabs
         this.hidePurchasePreview();
 
         // Clear build mode selection
         const buildBtns = document.querySelectorAll('.build-btn');
         buildBtns.forEach(b => b.classList.remove('active'));
-        document.getElementById('delete-mode-btn').classList.remove('active');
+        deleteModeBtn.classList.remove('active');
         this.game.selectedBuildType = null;
         this.game.isDeleteMode = false;
     }

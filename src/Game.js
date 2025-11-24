@@ -221,7 +221,12 @@ class Game {
 
         // Get Grid Pos
         const gridPos = this.sceneManager.getGridPositionFromMouse(e.clientX, e.clientY);
-        if (!gridPos) return;
+        if (!gridPos) {
+            // Clicked outside grid - hide preview and unit info
+            this.uiManager.hidePurchasePreview();
+            this.uiManager.hideUnitInfo();
+            return;
+        }
 
         if (this.isDeleteMode) {
             const removed = this.gridManager.removeUnit(gridPos.x, gridPos.y);
@@ -243,6 +248,8 @@ class Game {
                     this.resourceManager.deductCost(this.selectedBuildType);
                     this.sceneManager.addUnitVisual(unit);
                     this.soundManager.playBuildSound();
+                    // Hide preview after successful placement
+                    this.uiManager.hidePurchasePreview();
                 } else {
                     // Occupied or invalid
                     this.soundManager.playErrorSound();
@@ -252,14 +259,17 @@ class Game {
                 this.soundManager.playErrorSound();
             }
         } else {
-            // Select Unit
+            // Select Unit or clicked empty cell
             const unit = this.gridManager.getUnitAt(gridPos.x, gridPos.y);
             if (unit) {
                 this.uiManager.showUnitInfo(unit.type);
                 this.soundManager.playEventSound(); // Or a specific select sound
             } else {
+                // Clicked empty cell - hide both panels
                 this.uiManager.hideUnitInfo();
             }
+            // Always hide purchase preview in inspect mode
+            this.uiManager.hidePurchasePreview();
         }
     }
 
