@@ -134,6 +134,16 @@ class UIManager {
             this.updateToggleState(this.btnDashboard, this.isDashboardVisible);
         });
 
+        // Dashboard close button
+        const dashboardCloseBtn = document.getElementById('dashboard-close-btn');
+        if (dashboardCloseBtn) {
+            dashboardCloseBtn.addEventListener('click', () => {
+                this.isDashboardVisible = false;
+                this.hideDashboard();
+                this.updateToggleState(this.btnDashboard, this.isDashboardVisible);
+            });
+        }
+
         // Tab Navigation
         this.initTabNavigation();
 
