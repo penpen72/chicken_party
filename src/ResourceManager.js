@@ -5,7 +5,7 @@ class ResourceManager {
             tech: 0, // Product Stock
             rd_power: 0, // Total R&D Output
             sales_power: 0, // Total Sales Output
-            welfare: 50, // Average Happiness
+            welfare: 100, // Average Happiness (Base 100)
             staff: 0,
             hp: 5 // Partner Bond
         };
@@ -27,7 +27,7 @@ class ResourceManager {
                 name: "Responsibility System",
                 shortName: "責任制",
                 icon: "📋",
-                description: "Engineers work harder (+30% R&D/Level). Happiness -5/Level."
+                description: "Output +20%/Level. Happiness -1/Level."
             },
             competitive_salary: {
                 id: 'competitive_salary',
@@ -37,7 +37,7 @@ class ResourceManager {
                 name: "Competitive Salary",
                 shortName: "高薪",
                 icon: "💰",
-                description: "Salary +50%. Happiness locked at Max. Crit Chance +10%/Level."
+                description: "Salary +50%/Level. Happiness +20/Level."
             },
             expansion: {
                 id: 'expansion',
@@ -47,7 +47,7 @@ class ResourceManager {
                 name: "Office Expansion",
                 shortName: "擴建",
                 icon: "📐",
-                description: "Expand office space by +2x2."
+                description: "Expand office space (+2 Ring)."
             }
         };
 
@@ -55,7 +55,7 @@ class ResourceManager {
             engineer: {
                 name: "Jr. Engineer",
                 icon: "👓",
-                description: "Produces Tech Stock (Inventory). Needs focus.",
+                description: "Produces Tech Stock. Needs Happiness.",
                 cost: 100,
                 width: 1, height: 1,
                 stats: { cost: 10, rd: 20, sales: 0, welfare: 0, rep: 0, type: 'staff' }
@@ -63,7 +63,7 @@ class ResourceManager {
             senior_engineer: {
                 name: "Sr. Engineer",
                 icon: "👴",
-                description: "High Tech Stock output. Stresses Juniors. Global Stress (-1).",
+                description: "High Tech Output. Expensive.",
                 cost: 300,
                 width: 1, height: 1,
                 stats: { cost: 50, rd: 80, sales: 0, welfare: 0, rep: 0, type: 'staff' }
@@ -71,36 +71,36 @@ class ResourceManager {
             marketing: { // Sales
                 name: "Sales",
                 icon: "📢",
-                description: "Converts Tech Stock to Cash ($2/unit). Max $40/day.",
+                description: "Converts Tech to Cash. Lowers Global Happiness (-1).",
                 cost: 150,
                 width: 1, height: 1,
-                stats: { cost: 12, rd: 0, sales: 20, welfare: 0, rep: 0, type: 'staff' }
+                stats: { cost: 8, rd: 0, sales: 20, welfare: -1, rep: 0, type: 'staff' } // Global Welfare Penalty
             },
             pm: {
                 name: "Project Manager",
                 icon: "📅",
-                description: "Amplifies Tech: Converts 1 Tech -> 2 Tech (Max 20/day).",
+                description: "Amplifies Tech. Lowers Global Happiness (-2).",
                 cost: 250,
                 width: 1, height: 1,
-                stats: { cost: 40, rd: 0, sales: 0, welfare: 0, rep: 0, type: 'staff', conversion: 20 }
+                stats: { cost: 20, rd: 0, sales: 0, welfare: -2, rep: 0, type: 'staff', conversion: 20 } // Global Welfare Penalty
             },
             server: {
                 name: "Server Rack",
                 icon: "💾",
-                description: "Boosts neighbors' R&D (+50%). Noisy (-5 Happiness).",
+                description: "Boosts neighbors' R&D (+50%). Costs Daily Maintenance.",
                 cost: 500,
                 width: 1, height: 1,
-                stats: { cost: 20, rd: 0, sales: 0, welfare: -5, rep: 0, type: 'facility' },
+                stats: { cost: 10, rd: 0, sales: 0, welfare: 0, rep: 0, type: 'facility' },
                 effectRange: 1 // 3x3
             },
             pantry: {
                 name: "Pantry",
                 icon: "☕",
-                description: "Restores Happiness (+2/day). Large Area.",
+                description: "Restores Happiness (+4) to Engineers.",
                 cost: 300,
                 width: 2, height: 2,
-                stats: { cost: 5, rd: 0, sales: 0, welfare: 5, rep: 0, type: 'facility' },
-                effectRange: 2 // 6x6 (2 cell radius)
+                stats: { cost: 5, rd: 0, sales: 0, welfare: 4, rep: 0, type: 'facility' },
+                effectRange: 2 // 5x5 (Range 2)
             },
             conference_room: {
                 name: "Conference Room",
@@ -109,12 +109,12 @@ class ResourceManager {
                 cost: 1000,
                 width: 2, height: 1,
                 stats: { cost: 0, rd: 0, sales: 0, welfare: 0, rep: 0, type: 'facility' },
-                effectRange: { left: 1, right: 1, top: 1, bottom: 1 } // 4x3 area (symmetric expansion)
+                effectRange: { left: 1, right: 1, top: 1, bottom: 1 } // 4x3 area
             },
             plant: {
                 name: "Plant",
                 icon: "🪴",
-                description: "Small Happiness boost.",
+                description: "Small Happiness boost (+2) to Engineers.",
                 cost: 50,
                 width: 1, height: 1,
                 stats: { cost: 0, rd: 0, sales: 0, welfare: 2, rep: 0, type: 'facility' }
@@ -183,223 +183,199 @@ class ResourceManager {
 
         const units = gridManager.getAllUnits();
 
-        // Count Senior Engineers for Global Penalty
-        const seniorCount = units.filter(u => u.type === 'senior_engineer').length;
-        const seniorPenalty = seniorCount * 1; // -1 per Senior Engineer
+        // 1. Calculate Global Penalties
+        let globalHappinessPenalty = 0;
+        units.forEach(unit => {
+            const def = this.unitDefinitions[unit.type];
+            if (def && def.stats.welfare < 0) {
+                globalHappinessPenalty += Math.abs(def.stats.welfare);
+            }
+        });
 
-        // 1. Calculate Happiness & Efficiency for each unit
+        // 2. Calculate Policy Effects (Global)
+        let policyHappinessMod = 0;
+        let policySalaryMod = 1.0;
+        let policyOutputMod = 1.0;
+
+        // Responsibility System: Output +20%/Level, Happiness -1/Level
+        if (this.policies.responsibility_system.level > 0) {
+            policyOutputMod += 0.2 * this.policies.responsibility_system.level;
+            policyHappinessMod -= 1 * this.policies.responsibility_system.level;
+        }
+
+        // Competitive Salary: Salary +50%/Level, Happiness +20/Level
+        if (this.policies.competitive_salary.level > 0) {
+            policySalaryMod += 0.5 * this.policies.competitive_salary.level;
+            policyHappinessMod += 20 * this.policies.competitive_salary.level;
+        }
+
+        // 3. Process Each Unit
         units.forEach(unit => {
             const def = this.unitDefinitions[unit.type];
             if (!def) return;
 
-            // Initialize runtime stats if not present
-            if (!unit.runtime) unit.runtime = { happiness: 50, efficiency: 1, isZombie: false };
+            // Initialize runtime stats
+            if (!unit.runtime) unit.runtime = { happiness: 100, efficiency: 1, isZombie: false };
 
             if (def.stats.type === 'staff') {
                 this.kpis.staff++;
                 staffCount++;
 
-                // Calculate Happiness
-                // Base 50 + Env + Policy - Crowding
-                let envMod = 0;
-                let crowding = gridManager.getNeighborCount(unit.x, unit.y, 1); // 3x3 area (range 1)
-                // Crowding penalty: -2 per neighbor
-                let crowdingPenalty = crowding * 2;
+                // --- Happiness Calculation ---
+                // Base 100 + Local Buffs - Global Penalty + Policy Mod
+                let localBuffs = 0;
 
-                const neighbors = gridManager.getNeighbors(unit.x, unit.y, 1);
-                const potentialNeighbors = gridManager.getNeighbors(unit.x, unit.y, 2); // Max range is 2 (Pantry)
+                // Check Neighbors for Local Buffs (Pantry, Plant)
+                // Only Engineers get Local Buffs? "Effect: +4 Local Happiness (Engineers Only)"
+                // Let's implement "Engineers Only" check for Pantry/Plant buffs.
 
-                let hasPantryBuff = false;
-                let hasConferenceBuff = false;
-                let hasServerBuff = false;
+                const isEngineer = (unit.type === 'engineer' || unit.type === 'senior_engineer');
 
-                potentialNeighbors.forEach(n => {
-                    const nDef = this.unitDefinitions[n.type];
-                    if (!nDef) return;
+                if (isEngineer) {
+                    // Get neighbors in max range (2 for Pantry)
+                    const potentialNeighbors = gridManager.getNeighbors(unit.x, unit.y, 2);
 
-                    // Check if 'unit' is in 'n's effect range
-                    let inRange = false;
-                    if (nDef.effectRange) {
-                        // Calculate 'n's effect bounds
-                        let rLeft = 1, rRight = 1, rTop = 1, rBottom = 1;
-                        if (typeof nDef.effectRange === 'object') {
-                            rLeft = nDef.effectRange.left;
-                            rRight = nDef.effectRange.right;
-                            rTop = nDef.effectRange.top;
-                            rBottom = nDef.effectRange.bottom;
-                        } else {
-                            const r = nDef.effectRange;
-                            rLeft = r; rRight = r; rTop = r; rBottom = r;
-                        }
+                    let hasPantryBuff = false;
+                    let hasPlantBuff = false;
+                    let hasConferenceBuff = false;
+                    let hasServerBuff = false;
 
-                        const nX = n.x;
-                        const nY = n.y;
-                        const nW = n.width || 1;
-                        const nH = n.height || 1;
+                    potentialNeighbors.forEach(n => {
+                        const nDef = this.unitDefinitions[n.type];
+                        if (!nDef) return;
 
-                        // Effect Area
-                        const minX = nX - rLeft;
-                        const maxX = nX + nW - 1 + rRight;
-                        const minY = nY - rTop;
-                        const maxY = nY + nH - 1 + rBottom;
+                        // Check range
+                        let inRange = false;
+                        if (nDef.effectRange) {
+                            let r = (typeof nDef.effectRange === 'object') ? nDef.effectRange.left : nDef.effectRange; // Simplified
+                            // Proper range check
+                            let rLeft = r, rRight = r, rTop = r, rBottom = r;
+                            if (typeof nDef.effectRange === 'object') {
+                                rLeft = nDef.effectRange.left; rRight = nDef.effectRange.right;
+                                rTop = nDef.effectRange.top; rBottom = nDef.effectRange.bottom;
+                            }
 
-                        // Check intersection with 'unit'
-                        const uMinX = unit.x;
-                        const uMaxX = unit.x + (unit.width || 1) - 1;
-                        const uMinY = unit.y;
-                        const uMaxY = unit.y + (unit.height || 1) - 1;
+                            const minX = n.x - rLeft;
+                            const maxX = n.x + (n.width || 1) - 1 + rRight;
+                            const minY = n.y - rTop;
+                            const maxY = n.y + (n.height || 1) - 1 + rBottom;
 
-                        if (uMaxX >= minX && uMinX <= maxX && uMaxY >= minY && uMinY <= maxY) {
-                            inRange = true;
-                        }
-                    } else {
-                        // Default range 1 check (for non-facility interactions like Senior Engineer)
-                        if (n.type === 'senior_engineer' || n.type === 'plant') {
-                            const r = 1;
-                            const minX = n.x - r;
-                            const maxX = n.x + (n.width || 1) - 1 + r;
-                            const minY = n.y - r;
-                            const maxY = n.y + (n.height || 1) - 1 + r;
                             const uMinX = unit.x; const uMaxX = unit.x + (unit.width || 1) - 1;
                             const uMinY = unit.y; const uMaxY = unit.y + (unit.height || 1) - 1;
+
                             if (uMaxX >= minX && uMinX <= maxX && uMaxY >= minY && uMinY <= maxY) {
                                 inRange = true;
                             }
                         }
-                    }
 
-                    if (inRange) {
-                        if (n.type === 'pantry') hasPantryBuff = true;
-                        if (n.type === 'server') {
-                            envMod -= 5; // Server noise
-                            hasServerBuff = true;
+                        if (inRange) {
+                            if (n.type === 'pantry') hasPantryBuff = true;
+                            if (n.type === 'plant') hasPlantBuff = true;
+                            if (n.type === 'conference_room') hasConferenceBuff = true;
+                            if (n.type === 'server') hasServerBuff = true;
                         }
-                        if (n.type === 'conference_room') hasConferenceBuff = true;
-                        if (n.type === 'plant') envMod += 2;
-                        if (n.type === 'senior_engineer' && unit.type === 'engineer') envMod -= 5;
+                    });
+
+                    // Apply Buffs
+                    unit.runtime.buffs = [];
+                    if (hasPantryBuff) {
+                        localBuffs += 4;
+                        unit.runtime.buffs.push('pantry');
                     }
-                });
-
-                // Store buffs for visuals
-                unit.runtime.buffs = [];
-                if (hasPantryBuff) {
-                    envMod += 10;
-                    unit.runtime.buffs.push('pantry');
-                }
-                if (hasConferenceBuff) {
-                    unit.runtime.buffs.push('conference');
-                }
-                if (hasServerBuff) {
-                    unit.runtime.buffs.push('server');
+                    if (hasPlantBuff) {
+                        localBuffs += 2;
+                        unit.runtime.buffs.push('plant'); // Assuming Plant stacks with Pantry? Or separate? Let's sum them.
+                    }
+                    if (hasConferenceBuff) unit.runtime.buffs.push('conference');
+                    if (hasServerBuff) unit.runtime.buffs.push('server');
                 }
 
-                // Policies
-                if (this.policies.responsibility_system.level > 0) {
-                    // -5 per level
-                    envMod -= 5 * this.policies.responsibility_system.level;
-                }
-                if (this.policies.competitive_salary.level > 0) {
-                    unit.runtime.happiness = 100; // Locked at max
-                } else {
-                    unit.runtime.happiness = Math.max(0, Math.min(100, 50 + envMod - crowdingPenalty - seniorPenalty));
-                }
-
+                // Final Happiness
+                let happiness = 100 - globalHappinessPenalty + policyHappinessMod + localBuffs;
+                unit.runtime.happiness = Math.max(0, happiness); // Can exceed 100
                 totalHappiness += unit.runtime.happiness;
 
-                // Calculate Efficiency
-                // Formula: (Happiness / 50)^2
-                if (unit.runtime.happiness < 50) {
-                    unit.runtime.efficiency = Math.pow(unit.runtime.happiness / 50, 2);
+                // --- Efficiency Calculation ---
+                // Only Engineers use Efficiency formula: (Happiness / 100)^2
+                if (isEngineer) {
+                    unit.runtime.efficiency = Math.pow(unit.runtime.happiness / 100, 2);
+
+                    // Conference Room Buff: +20% Efficiency
+                    if (unit.runtime.buffs && unit.runtime.buffs.includes('conference')) {
+                        unit.runtime.efficiency *= 1.2;
+                    }
                 } else {
-                    unit.runtime.efficiency = 1 + (unit.runtime.happiness - 50) / 100; // Bonus for > 50
+                    // Sales/PM always 100% Efficiency (unless we want them affected too? Plan said "Engineers Only")
+                    unit.runtime.efficiency = 1.0;
                 }
 
-                // Conference Room Buff: +20% Efficiency
-                if (hasConferenceBuff) {
-                    unit.runtime.efficiency *= 1.2;
-                }
-
-                // Zombie Check
+                // Zombie Check (Efficiency < 10% -> < 0.1)
+                // Note: If Sales/PM are always 1.0, they never become zombies?
+                // Or should we check Happiness for them too?
+                // "Efficiency is heavily dependent on Happiness... (Applied to Engineers ONLY)"
+                // So Sales/PM are immune to Zombie mode? Or maybe they quit?
+                // For now, let's keep Zombie logic tied to Efficiency. So only Engineers become Zombies.
                 if (unit.runtime.efficiency < 0.1) {
                     unit.runtime.isZombie = true;
                     unit.runtime.efficiency = 0;
                 } else {
                     unit.runtime.isZombie = false;
                 }
-            }
-        });
 
-        this.kpis.welfare = staffCount > 0 ? totalHappiness / staffCount : 50;
-
-        // 2. Calculate Flows based on Efficiency
-        units.forEach(unit => {
-            const def = this.unitDefinitions[unit.type];
-            if (!def) return;
-
-            // Costs are fixed (Zombie still gets paid)
-            let salaryMod = 1.0;
-
-            // Policy: Competitive Salary -> +50% Salary
-            if (this.policies.competitive_salary.level > 0) salaryMod += 0.5;
-
-            const salary = def.stats.cost * salaryMod;
-            totalSalary += salary;
-
-            if (def.stats.type === 'staff') {
-                // Output scaled by efficiency
-                let efficiency = unit.runtime.efficiency;
-
-                // Removed PM Buff (Old mechanic)
-
-                // Policy: Responsibility System -> +30% R&D per level
-                let policyRdMod = 1.0;
-                if (this.policies.responsibility_system.level > 0 && (unit.type === 'engineer' || unit.type === 'senior_engineer')) {
-                    policyRdMod = 1 + (0.3 * this.policies.responsibility_system.level);
+                // --- Salary Calculation ---
+                let unitSalary = def.stats.cost;
+                // Apply Policy Salary Mod (Competitive Salary)
+                // "Each Engineer Salary +50%". So only Engineers?
+                // Plan said: "Competitive Salary... Target: Engineers Only"
+                if (isEngineer) {
+                    unitSalary *= policySalaryMod;
                 }
+                totalSalary += unitSalary;
 
-                // Policy: Competitive Salary -> Crit Chance
-                // We simulate this as average boost: +10% per level
-                let critMod = 1.0;
-                if (this.policies.competitive_salary.level > 0) {
-                    critMod = 1 + (0.1 * this.policies.competitive_salary.level);
-                }
+                // --- Output Calculation ---
 
-                // R&D Production
+                // R&D
                 if (def.stats.rd > 0) {
-                    // Server Buff: +50% Tech (R&D)
                     let techMod = 1.0;
-                    if (unit.runtime && unit.runtime.buffs && unit.runtime.buffs.includes('server')) {
+                    // Server Buff: +50%
+                    if (unit.runtime.buffs && unit.runtime.buffs.includes('server')) {
                         techMod = 1.5;
                     }
 
-                    const rdOutput = def.stats.rd * efficiency * techMod * policyRdMod * critMod;
+                    // Policy Output Mod (Responsibility System)
+                    // Applied to Engineers Only? Yes, "Target: Engineers Only"
+                    let currentPolicyOutputMod = isEngineer ? policyOutputMod : 1.0;
+
+                    const rdOutput = def.stats.rd * unit.runtime.efficiency * techMod * currentPolicyOutputMod;
                     this.flows.rd_power += rdOutput;
 
-                    // Track engineer-only production (excluding other sources)
-                    if (unit.type === 'engineer' || unit.type === 'senior_engineer') {
+                    if (isEngineer) {
                         this.flows.engineer_rd_power += rdOutput;
                     }
                 }
 
-                // Sales Production
+                // Sales
                 if (def.stats.sales > 0) {
-                    this.flows.sales_power += def.stats.sales * efficiency * critMod;
+                    this.flows.sales_power += def.stats.sales * unit.runtime.efficiency; // Efficiency is 1.0 for Sales
                 }
 
-                // PM Conversion Power
+                // PM
                 if (def.stats.conversion > 0) {
-                    this.flows.pm_power += def.stats.conversion * efficiency;
+                    this.flows.pm_power += def.stats.conversion * unit.runtime.efficiency; // Efficiency is 1.0 for PM
                 }
 
             } else {
-                // Facilities (Passive effects handled in step 1 or here)
-                this.flows.welfare += def.stats.welfare; // Global welfare boost? No, local.
-                // Facility costs already handled.
+                // Facilities
+                // Server has daily cost now
+                if (def.stats.cost > 0) {
+                    totalSalary += def.stats.cost;
+                }
             }
         });
 
+        this.kpis.welfare = staffCount > 0 ? totalHappiness / staffCount : 100;
+
         // 3. Calculate Profit (Stock-based)
-        // We only calculate potential flows here. Actual conversion happens in tick.
         this.flows.totalSalary = totalSalary;
 
         // Update KPIs for display (Rates)
@@ -448,7 +424,7 @@ class ResourceManager {
         this.kpis.cash += revenue - expense;
 
         // Cap welfare
-        this.kpis.welfare = Math.max(0, Math.min(100, this.kpis.welfare));
+        // this.kpis.welfare = Math.max(0, Math.min(100, this.kpis.welfare)); // Removed Cap 100
     }
 
     /**
@@ -456,12 +432,6 @@ class ResourceManager {
      * @returns {Object} Summary of daily operations
      */
     getDailySummary() {
-        // Calculate salary modifier
-        let salaryModifier = 1.0;
-        if (this.policies.competitive_salary.level > 0) {
-            salaryModifier = 1.5; // +50%
-        }
-
         // Calculate max revenue (sales power * $2 per unit)
         const unitPrice = 2;
         const maxRevenue = this.flows.sales_power * unitPrice;
@@ -472,13 +442,13 @@ class ResourceManager {
         if (this.policies.responsibility_system.level > 0) {
             const level = this.policies.responsibility_system.level;
             policyEffects.push({
-                name: `R&D Output`,
-                value: `+${level * 30}%`,
+                name: `Eng. Output`,
+                value: `+${level * 20}%`,
                 isPositive: true
             });
             policyEffects.push({
                 name: `Global Happiness`,
-                value: `-${level * 5}`,
+                value: `-${level * 1}`,
                 isPositive: false
             });
         }
@@ -486,18 +456,13 @@ class ResourceManager {
         if (this.policies.competitive_salary.level > 0) {
             const level = this.policies.competitive_salary.level;
             policyEffects.push({
-                name: `Salary Cost`,
-                value: `+50%`,
+                name: `Eng. Salary`,
+                value: `+${level * 50}%`,
                 isPositive: false
             });
             policyEffects.push({
                 name: `Happiness`,
-                value: `Locked at Max`,
-                isPositive: true
-            });
-            policyEffects.push({
-                name: `Crit Chance`,
-                value: `+${level * 10}%`,
+                value: `+${level * 20}`,
                 isPositive: true
             });
         }
@@ -505,7 +470,7 @@ class ResourceManager {
         if (this.policies.expansion.level > 0) {
             policyEffects.push({
                 name: `Office Size`,
-                value: `+${this.policies.expansion.level * 2}`,
+                value: `+${this.policies.expansion.level * 2} Ring`,
                 isPositive: true
             });
         }
@@ -528,11 +493,11 @@ class ResourceManager {
 
             // Staff & Happiness
             staffCount: this.kpis.staff || 0,
-            averageHappiness: this.kpis.welfare || 50,
+            averageHappiness: this.kpis.welfare || 100,
 
             // Policy Effects
             activePolicies: policyEffects,
-            salaryModifier: salaryModifier
+            salaryModifier: 1.0 // Deprecated/Handled in calculation
         };
     }
 }

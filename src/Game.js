@@ -15,7 +15,7 @@ class Game {
         this.visualTickInterval = 2.0; // Every 2 seconds
 
         // Managers
-        this.gridManager = new GridManager(10, 10);
+        this.gridManager = new GridManager(6, 6);
         this.resourceManager = new ResourceManager();
         this.soundManager = new SoundManager();
         this.sceneManager = null; // Init in start
@@ -35,7 +35,7 @@ class Game {
 
     start() {
         // Init Visuals
-        this.sceneManager = new SceneManager('game-canvas', 10, 10);
+        this.sceneManager = new SceneManager('game-canvas', 6, 6);
 
         // Init UI
         this.uiManager = new UIManager(this);
@@ -162,6 +162,12 @@ class Game {
     onMouseMove(e) {
         if (this.isGameOver) return;
 
+        // Ignore mouse move on UI elements
+        if (e.target.id !== 'game-canvas') {
+            this.sceneManager.updateHighlight(null);
+            return;
+        }
+
         const gridPos = this.sceneManager.getGridPositionFromMouse(e.clientX, e.clientY);
 
         if (gridPos) {
@@ -218,6 +224,9 @@ class Game {
 
     onMouseDown(e) {
         if (this.isGameOver) return;
+
+        // Ignore clicks on UI elements (only process clicks on canvas)
+        if (e.target.id !== 'game-canvas') return;
 
         // Get Grid Pos
         const gridPos = this.sceneManager.getGridPositionFromMouse(e.clientX, e.clientY);
@@ -344,10 +353,10 @@ class Game {
     }
 
     expandGrid(newLevel) {
-        // Base size 10x10. Each level adds +2 to width and height.
-        // Level 1 -> 12x12
-        // Level 5 -> 20x20
-        const baseSize = 10;
+        // Base size 6x6. Each level adds +2 to width and height.
+        // Level 1 -> 8x8
+        // Level 5 -> 16x16
+        const baseSize = 6;
         const newSize = baseSize + (newLevel * 2);
 
         this.gridManager.resize(newSize, newSize);

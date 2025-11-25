@@ -214,7 +214,13 @@ class UIManager {
             statsHtml += `<div class="stat-row"><span class="stat-label">Max Revenue:</span><span class="stat-value">+$${maxRevenue}/day (uses Tech)</span></div>`;
         }
         if (def.stats.rep > 0) statsHtml += `<div class="stat-row"><span class="stat-label">Reputation:</span><span class="stat-value">+${def.stats.rep}</span></div>`;
-        if (def.stats.welfare !== 0) statsHtml += `<div class="stat-row"><span class="stat-label">Happiness:</span><span class="stat-value">${def.stats.welfare > 0 ? '+' : ''}${def.stats.welfare}</span></div>`;
+        if (def.stats.welfare !== 0) {
+            const isPenalty = def.stats.welfare < 0;
+            const label = isPenalty ? 'Global Happiness:' : 'Happiness:';
+            const valueClass = isPenalty ? 'negative' : 'positive';
+            const sign = def.stats.welfare > 0 ? '+' : '';
+            statsHtml += `<div class="stat-row"><span class="stat-label">${label}</span><span class="stat-value ${valueClass}">${sign}${def.stats.welfare}</span></div>`;
+        }
 
         this.unitStats.innerHTML = statsHtml;
         this.unitInfoPanel.classList.remove('hidden');
@@ -262,7 +268,11 @@ class UIManager {
             statsHtml += `<div class="stat-row"><span class="stat-label">📢 Reputation:</span><span class="stat-value">+${def.stats.rep}/day</span></div>`;
         }
         if (def.stats.welfare !== 0) {
-            statsHtml += `<div class="stat-row"><span class="stat-label">❤️ Happiness:</span><span class="stat-value">${def.stats.welfare > 0 ? '+' : ''}${def.stats.welfare}</span></div>`;
+            const isPenalty = def.stats.welfare < 0;
+            const label = isPenalty ? '💔 Global Happiness:' : '❤️ Happiness:';
+            const valueClass = isPenalty ? 'negative' : 'positive';
+            const sign = def.stats.welfare > 0 ? '+' : '';
+            statsHtml += `<div class="stat-row"><span class="stat-label">${label}</span><span class="stat-value ${valueClass}">${sign}${def.stats.welfare}</span></div>`;
         }
 
         this.previewStats.innerHTML = statsHtml;
@@ -396,13 +406,13 @@ class UIManager {
         let statsHtml = '';
 
         if (policyKey === 'responsibility_system') {
-            statsHtml += `<div class="stat-row"><span class="stat-label">R&D Output:</span><span class="stat-value">+${(policy.level + 1) * 30}% (Next Level)</span></div>`;
-            statsHtml += `<div class="stat-row"><span class="stat-label">Happiness:</span><span class="stat-value">-${(policy.level + 1) * 5} (Next Level)</span></div>`;
+            statsHtml += `<div class="stat-row"><span class="stat-label">R&D Output:</span><span class="stat-value">+${(policy.level + 1) * 20}% (Next Level)</span></div>`;
+            statsHtml += `<div class="stat-row"><span class="stat-label">Happiness:</span><span class="stat-value">-${(policy.level + 1) * 1} (Next Level)</span></div>`;
         } else if (policyKey === 'competitive_salary') {
-            statsHtml += `<div class="stat-row"><span class="stat-label">Salary:</span><span class="stat-value">+50%</span></div>`;
-            statsHtml += `<div class="stat-row"><span class="stat-label">Crit Chance:</span><span class="stat-value">+${(policy.level + 1) * 10}% (Next Level)</span></div>`;
+            statsHtml += `<div class="stat-row"><span class="stat-label">Salary:</span><span class="stat-value">+${(policy.level + 1) * 50}% (Next Level)</span></div>`;
+            statsHtml += `<div class="stat-row"><span class="stat-label">Happiness:</span><span class="stat-value">+${(policy.level + 1) * 20} (Next Level)</span></div>`;
         } else if (policyKey === 'expansion') {
-            statsHtml += `<div class="stat-row"><span class="stat-label">Office Size:</span><span class="stat-value">+2x2 (Next Level)</span></div>`;
+            statsHtml += `<div class="stat-row"><span class="stat-label">Office Size:</span><span class="stat-value">+2 Ring (Next Level)</span></div>`;
         }
 
         this.policyStats.innerHTML = statsHtml;
@@ -541,14 +551,17 @@ class UIManager {
 
         // Happiness Section
         const happiness = Math.floor(summary.averageHappiness);
-        const happinessPercent = Math.min(100, Math.max(0, happiness));
+        // Base 100
+        const happinessPercent = Math.min(100, Math.max(0, happiness)); // For bar display (0-100)
+
         let efficiencyText = '';
-        if (happiness < 50) {
-            const efficiency = Math.floor(Math.pow(happiness / 50, 2) * 100);
-            efficiencyText = `低快樂度降低效率至 ${efficiency}%`;
-        } else if (happiness > 50) {
-            const efficiency = Math.floor((1 + (happiness - 50) / 100) * 100);
-            efficiencyText = `高快樂度提升效率至 ${efficiency}%`;
+        // Formula: (Happiness / 100)^2
+        const efficiency = Math.floor(Math.pow(happiness / 100, 2) * 100);
+
+        if (happiness < 100) {
+            efficiencyText = `效率降低至 ${efficiency}% (工程師)`;
+        } else if (happiness > 100) {
+            efficiencyText = `效率提升至 ${efficiency}% (工程師)`;
         } else {
             efficiencyText = `正常效率 (100%)`;
         }
