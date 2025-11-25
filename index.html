@@ -79,7 +79,23 @@
                     <div id="preview-hint">💡 Click on grid to build</div>
                 </div>
 
-                <!-- Tab Navigation -->
+                <!-- Policy Info Panel (Above build menu, like Purchase Preview) -->
+                <div id="policy-info-panel" class="hidden">
+                    <div class="policy-header">
+                        <div id="policy-icon">📋</div>
+                        <div id="policy-name">Policy Name</div>
+                        <div class="policy-level-badge" id="policy-level">LV 1</div>
+                    </div>
+                    <div id="policy-desc">Description goes here...</div>
+                    <div id="policy-stats">
+                        <!-- Stats will be injected here -->
+                    </div>
+                    <button id="policy-upgrade-btn" class="policy-upgrade-button">
+                        Upgrade ($<span id="policy-cost">5000</span>)
+                    </button>
+                </div>
+
+                <!--Tab Navigation -->
                 <div id="tab-nav">
                     <button class="tab-btn active" data-tab="manpower">Manpower</button>
                     <button class="tab-btn" data-tab="facilities">Facilities</button>
@@ -192,21 +208,6 @@
                 </div>
             </div>
 
-            <!-- Policy Info Panel -->
-            <div id="policy-info-panel" class="hidden">
-                <div class="policy-header">
-                    <div id="policy-icon">📋</div>
-                    <div id="policy-name">Policy Name</div>
-                    <div class="policy-level-badge" id="policy-level">LV 1</div>
-                </div>
-                <div id="policy-desc">Description goes here...</div>
-                <div id="policy-stats">
-                    <!-- Stats will be injected here -->
-                </div>
-                <button id="policy-upgrade-btn" class="policy-upgrade-button">
-                    Upgrade ($<span id="policy-cost">5000</span>)
-                </button>
-            </div>
 
             <!-- Company Dashboard Panel -->
             <div id="company-dashboard" class="hidden">

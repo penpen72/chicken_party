@@ -154,6 +154,7 @@ class UIManager {
         if (this.panelBackdrop) {
             this.panelBackdrop.addEventListener('click', () => {
                 this.hideUnitInfo();
+                this.hidePolicyInfo();
             });
         }
     }
@@ -406,6 +407,11 @@ class UIManager {
 
         this.policyStats.innerHTML = statsHtml;
         this.policyInfoPanel.classList.remove('hidden');
+
+        // Show backdrop on mobile
+        if (this.panelBackdrop) {
+            this.panelBackdrop.classList.add('active');
+        }
     }
 
     hidePolicyInfo() {
@@ -414,12 +420,26 @@ class UIManager {
         }
         this.currentPolicyKey = null;
         document.querySelectorAll('.policy-btn-item').forEach(b => b.classList.remove('selected'));
+
+        // Hide backdrop
+        if (this.panelBackdrop) {
+            this.panelBackdrop.classList.remove('active');
+        }
     }
 
     upgradePolicy(key) {
         const result = this.game.resourceManager.activatePolicy(key);
+        const btn = this.policyUpgradeBtn;
+
         if (result.success) {
             this.game.soundManager.playBuildSound();
+
+            // Success Animation
+            if (btn) {
+                btn.classList.add('btn-success');
+                setTimeout(() => btn.classList.remove('btn-success'), 300);
+            }
+
             if (result.type === 'expansion') {
                 this.game.expandGrid(result.level);
             }
@@ -433,6 +453,12 @@ class UIManager {
             if (this.isDashboardVisible) this.updateDashboard();
         } else {
             this.game.soundManager.playErrorSound();
+
+            // Error Animation (Shake)
+            if (btn) {
+                btn.classList.add('btn-shake');
+                setTimeout(() => btn.classList.remove('btn-shake'), 300);
+            }
         }
     }
 
