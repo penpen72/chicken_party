@@ -36,6 +36,7 @@ class ResourceManager {
                 level: 0,
                 maxLevel: 5,
                 baseCost: 2000,
+                techCost: 1000,
                 name: "Competitive Salary",
                 shortName: "高薪",
                 icon: "💰",
