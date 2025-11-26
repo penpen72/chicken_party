@@ -118,7 +118,7 @@ class ResourceManager {
             conference_room: {
                 name: "Conference Room",
                 icon: "🤝",
-                description: "Accelerates any unit (+20% Efficiency).",
+                description: "Accelerates Staff (Eng/Sales/PM) (+20% Efficiency).",
                 cost: 1000,
                 width: 2, height: 1,
                 stats: { cost: 0, rd: 0, sales: 0, welfare: 0, rep: 0, type: 'facility' },
@@ -271,8 +271,11 @@ class ResourceManager {
                 // Let's implement "Engineers Only" check for Pantry/Plant buffs.
 
                 const isEngineer = (unit.type === 'engineer' || unit.type === 'senior_engineer');
+                const isSales = (unit.type === 'marketing');
+                const isPM = (unit.type === 'pm');
+                const isStaff = isEngineer || isSales || isPM;
 
-                if (isEngineer) {
+                if (isStaff) {
                     // Get neighbors in max range (2 for Pantry)
                     const potentialNeighbors = gridManager.getNeighbors(unit.x, unit.y, 2);
 
@@ -319,15 +322,23 @@ class ResourceManager {
 
                     // Apply Buffs
                     unit.runtime.buffs = [];
-                    if (hasPantryBuff) {
-                        localBuffs += 4;
-                        unit.runtime.buffs.push('pantry');
+                    // Pantry/Plant only affect Engineers
+                    if (isEngineer) {
+                        if (hasPantryBuff) {
+                            localBuffs += 4;
+                            unit.runtime.buffs.push('pantry');
+                        }
+                        if (hasPlantBuff) {
+                            localBuffs += 2;
+                            unit.runtime.buffs.push('plant');
+                        }
                     }
-                    if (hasPlantBuff) {
-                        localBuffs += 2;
-                        unit.runtime.buffs.push('plant'); // Assuming Plant stacks with Pantry? Or separate? Let's sum them.
-                    }
+
+                    // Conference Room affects all Staff (Eng, Sales, PM)
                     if (hasConferenceBuff) unit.runtime.buffs.push('conference');
+
+                    // Server affects Engineers (and maybe others? Code said "Boosts neighbors' R&D")
+                    // R&D is produced by Engineers. So effectively Engineers.
                     if (hasServerBuff) unit.runtime.buffs.push('server');
                 }
 
@@ -340,14 +351,14 @@ class ResourceManager {
                 // Only Engineers use Efficiency formula: (Happiness / 100)^2
                 if (isEngineer) {
                     unit.runtime.efficiency = Math.pow(unit.runtime.happiness / 100, 2);
-
-                    // Conference Room Buff: +20% Efficiency
-                    if (unit.runtime.buffs && unit.runtime.buffs.includes('conference')) {
-                        unit.runtime.efficiency *= 1.2;
-                    }
                 } else {
-                    // Sales/PM always 100% Efficiency (unless we want them affected too? Plan said "Engineers Only")
+                    // Sales/PM always 100% Efficiency base
                     unit.runtime.efficiency = 1.0;
+                }
+
+                // Conference Room Buff: +20% Efficiency (Applies to all Staff)
+                if (unit.runtime.buffs && unit.runtime.buffs.includes('conference')) {
+                    unit.runtime.efficiency *= 1.2;
                 }
 
                 // Zombie Check (Efficiency < 10% -> < 0.1)
