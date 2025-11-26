@@ -4,6 +4,11 @@ class GridManager {
         this.height = height;
         this.grid = new Array(width * height).fill(null); // Stores unit objects
         this.units = []; // List of active units
+
+        // Reusable scratch structures to avoid per-call allocations when
+        // evaluating neighbors every frame.
+        this.neighborScratch = [];
+        this.neighborScratchSet = new Set();
     }
 
     getIndex(x, y) {
@@ -81,12 +86,14 @@ class GridManager {
         return this.getNeighborsAsymmetric(x, y, range, range, range, range);
     }
 
+    // Returns a reused array of neighbor units (do not mutate or store long-term).
     getNeighborsAsymmetric(x, y, rLeft, rRight, rTop, rBottom) {
         const unit = this.getUnitAt(x, y);
         const w = unit ? unit.width : 1;
         const h = unit ? unit.height : 1;
 
-        const neighbors = new Set();
+        this.neighborScratchSet.clear();
+        this.neighborScratch.length = 0;
 
         const startX = x - rLeft;
         const endX = x + w - 1 + rRight;
@@ -100,13 +107,14 @@ class GridManager {
 
                 if (this.isValid(dx, dy)) {
                     const neighbor = this.getUnitAt(dx, dy);
-                    if (neighbor && neighbor !== unit) {
-                        neighbors.add(neighbor);
+                    if (neighbor && neighbor !== unit && !this.neighborScratchSet.has(neighbor)) {
+                        this.neighborScratchSet.add(neighbor);
+                        this.neighborScratch.push(neighbor);
                     }
                 }
             }
         }
-        return Array.from(neighbors);
+        return this.neighborScratch;
     }
 
     getNeighborCount(x, y, range = 1) {

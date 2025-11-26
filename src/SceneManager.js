@@ -54,6 +54,20 @@ class SceneManager {
         // Floating Texts
         this.floatingTexts = [];
 
+        // Cache reusable textures for floating texts to avoid repeatedly creating
+        // CanvasTexture instances (which bloat GPU/JS memory over time).
+        this.textTextureCache = new Map(); // key => THREE.CanvasTexture
+
+        // Shared materials/geometries to avoid per-frame allocations
+        this.zombieMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 });
+        this.buffMarkerGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+        this.buffMarkerMaterials = {
+            pantry: new THREE.MeshBasicMaterial({ color: 0xfacc15 }),
+            server: new THREE.MeshBasicMaterial({ color: 0x10b981 }),
+            conference: new THREE.MeshBasicMaterial({ color: 0xa855f7 }),
+            default: new THREE.MeshBasicMaterial({ color: 0xffffff })
+        };
+
         // Materials (Modern Palette)
         this.materials = {
             engineer: new THREE.MeshStandardMaterial({ color: 0x3b82f6 }), // Bright Blue
@@ -240,7 +254,7 @@ class SceneManager {
     }
 
     spawnFloatingText(unit, text, color) {
-        const texture = this.createTextTexture(text, color);
+        const texture = this.getTextTexture(text, color);
         const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
         const sprite = new THREE.Sprite(material);
 
@@ -263,7 +277,12 @@ class SceneManager {
         });
     }
 
-    createTextTexture(text, color) {
+    getTextTexture(text, color) {
+        const cacheKey = `${text}-${color}`;
+        if (this.textTextureCache.has(cacheKey)) {
+            return this.textTextureCache.get(cacheKey);
+        }
+
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = 256;
@@ -284,6 +303,7 @@ class SceneManager {
         ctx.fillText(text, 128, 64);
 
         const texture = new THREE.CanvasTexture(canvas);
+        this.textTextureCache.set(cacheKey, texture);
         return texture;
     }
 
@@ -306,7 +326,6 @@ class SceneManager {
 
             if (ft.life <= 0) {
                 this.scene.remove(ft.sprite);
-                ft.sprite.material.map.dispose();
                 ft.sprite.material.dispose();
                 this.floatingTexts.splice(i, 1);
             }
@@ -411,11 +430,11 @@ class SceneManager {
         units.forEach(unit => {
             const mesh = this.unitMeshes.get(unit.id);
             if (mesh && unit.runtime) {
-                if (unit.runtime.isZombie) {
-                    mesh.material = new THREE.MeshStandardMaterial({ color: 0x888888 }); // Gray for Zombie
-                } else {
-                    // Reset to original material
-                    mesh.material = this.materials[unit.type] || this.materials.engineer;
+                const targetMaterial = unit.runtime.isZombie
+                    ? this.zombieMaterial
+                    : (this.materials[unit.type] || this.materials.engineer);
+                if (mesh.material !== targetMaterial) {
+                    mesh.material = targetMaterial;
                 }
 
                 // Visual Buffs (Simple particles or color tint? Let's use floating icons or just tint for now)
@@ -423,24 +442,33 @@ class SceneManager {
                 // Or just tint the mesh slightly?
                 // Let's use a simple marker above the unit.
 
-                // Clear old markers
-                mesh.children.forEach(c => {
-                    if (c.userData.isBuffMarker) mesh.remove(c);
-                });
+                const hasBuffs = unit.runtime.buffs && unit.runtime.buffs.length > 0;
+                const marker = mesh.userData.buffMarker;
 
-                if (unit.runtime.buffs && unit.runtime.buffs.length > 0) {
-                    // Add marker
-                    const markerGeo = new THREE.SphereGeometry(0.2, 8, 8);
-                    let color = 0xffffff;
-                    if (unit.runtime.buffs.includes('pantry')) color = 0xfacc15; // Yellow
-                    else if (unit.runtime.buffs.includes('server')) color = 0x10b981; // Green
-                    else if (unit.runtime.buffs.includes('conference')) color = 0xa855f7; // Purple
+                if (!hasBuffs && marker) {
+                    mesh.remove(marker);
+                    mesh.userData.buffMarker = null;
+                } else if (hasBuffs) {
+                    const buffType = unit.runtime.buffs.includes('pantry')
+                        ? 'pantry'
+                        : unit.runtime.buffs.includes('server')
+                            ? 'server'
+                            : unit.runtime.buffs.includes('conference')
+                                ? 'conference'
+                                : 'default';
+                    const desiredMaterial = this.buffMarkerMaterials[buffType] || this.buffMarkerMaterials.default;
 
-                    const markerMat = new THREE.MeshBasicMaterial({ color: color });
-                    const marker = new THREE.Mesh(markerGeo, markerMat);
-                    marker.position.set(0, 1.5, 0);
-                    marker.userData.isBuffMarker = true;
-                    mesh.add(marker);
+                    if (marker) {
+                        if (marker.material !== desiredMaterial) {
+                            marker.material = desiredMaterial;
+                        }
+                    } else {
+                        const newMarker = new THREE.Mesh(this.buffMarkerGeometry, desiredMaterial);
+                        newMarker.position.set(0, 1.5, 0);
+                        newMarker.userData.isBuffMarker = true;
+                        mesh.add(newMarker);
+                        mesh.userData.buffMarker = newMarker;
+                    }
                 }
             }
         });

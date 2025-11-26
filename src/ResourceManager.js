@@ -13,9 +13,11 @@ class ResourceManager {
         this.flows = {
             cash: 0,
             rd_power: 0,
+            engineer_rd_power: 0,
             sales_power: 0,
             welfare: 0,
-            totalSalary: 0
+            totalSalary: 0,
+            pm_power: 0
         };
 
         this.policies = {
@@ -173,8 +175,14 @@ class ResourceManager {
 
     // Main calculation loop
     calculateFlows(gridManager) {
-        // Reset flows
-        this.flows = { cash: 0, rd_power: 0, engineer_rd_power: 0, sales_power: 0, welfare: 0, totalSalary: 0, pm_power: 0 };
+        // Reset flows without reallocating the object (reduces per-frame garbage)
+        this.flows.cash = 0;
+        this.flows.rd_power = 0;
+        this.flows.engineer_rd_power = 0;
+        this.flows.sales_power = 0;
+        this.flows.welfare = 0;
+        this.flows.totalSalary = 0;
+        this.flows.pm_power = 0;
         this.kpis.staff = 0;
 
         let totalHappiness = 0;

@@ -3,6 +3,7 @@ class Game {
         this.lastTime = 0;
         this.isPlaying = false;
         this.isGameOver = false;
+        this.loop = this.loop.bind(this);
 
         // Game State
         this.year = 2015;
@@ -41,7 +42,8 @@ class Game {
         this.uiManager = new UIManager(this);
 
         this.isPlaying = true;
-        requestAnimationFrame((t) => this.loop(t));
+        this.lastTime = performance.now();
+        requestAnimationFrame(this.loop);
 
         // Bind Inputs
         window.addEventListener('mousedown', (e) => this.onMouseDown(e));
@@ -102,7 +104,7 @@ class Game {
             this.triggerGameOver("Bankruptcy! You have run out of funds.");
         }
 
-        requestAnimationFrame((t) => this.loop(t));
+        requestAnimationFrame(this.loop);
     }
 
     checkDailyEvent() {
