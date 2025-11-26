@@ -41,6 +41,17 @@ class ResourceManager {
                 icon: "💰",
                 description: "Salary +50%/Level. Happiness +20/Level."
             },
+            high_end_product: {
+                id: 'high_end_product',
+                level: 0,
+                maxLevel: 5,
+                baseCost: 1000000,
+                techCost: 100000,
+                name: "High-End Product Line",
+                shortName: "高階產線",
+                icon: "💎",
+                description: "Sales +100%/Level. Sales Penalty +1/Level."
+            },
             expansion: {
                 id: 'expansion',
                 level: 0,
@@ -164,7 +175,16 @@ class ResourceManager {
         const cost = this.getPolicyCost(policyKey);
 
         if (this.kpis.cash >= cost) {
+            // Check Tech Cost if applicable
+            if (policy.techCost && this.kpis.tech < policy.techCost * (policy.level + 1)) {
+                return { success: false, reason: 'no_tech' };
+            }
+
             this.kpis.cash -= cost;
+            if (policy.techCost) {
+                this.kpis.tech -= policy.techCost * (policy.level + 1);
+            }
+
             policy.level++;
 
             // Return type for special handling (like expansion)
@@ -196,7 +216,12 @@ class ResourceManager {
         units.forEach(unit => {
             const def = this.unitDefinitions[unit.type];
             if (def && def.stats.welfare < 0) {
-                globalHappinessPenalty += Math.abs(def.stats.welfare);
+                let penalty = Math.abs(def.stats.welfare);
+                // Apply High-End Product Line Penalty to Sales
+                if (unit.type === 'marketing' && this.policies.high_end_product.level > 0) {
+                    penalty += 1 * this.policies.high_end_product.level;
+                }
+                globalHappinessPenalty += penalty;
             }
         });
 
@@ -215,6 +240,14 @@ class ResourceManager {
         if (this.policies.competitive_salary.level > 0) {
             policySalaryMod += 0.5 * this.policies.competitive_salary.level;
             policyHappinessMod += 20 * this.policies.competitive_salary.level;
+        }
+
+        // High-End Product Line: Sales Output +100%/Level, Sales Penalty +1/Level
+        let policySalesOutputMod = 1.0;
+        let policySalesPenaltyMod = 0;
+        if (this.policies.high_end_product.level > 0) {
+            policySalesOutputMod += 1.0 * this.policies.high_end_product.level;
+            policySalesPenaltyMod += 1 * this.policies.high_end_product.level;
         }
 
         // 3. Process Each Unit
@@ -364,7 +397,8 @@ class ResourceManager {
 
                 // Sales
                 if (def.stats.sales > 0) {
-                    this.flows.sales_power += def.stats.sales * unit.runtime.efficiency; // Efficiency is 1.0 for Sales
+                    // Apply High-End Product Line Mod
+                    this.flows.sales_power += def.stats.sales * unit.runtime.efficiency * policySalesOutputMod;
                 }
 
                 // PM
@@ -472,6 +506,20 @@ class ResourceManager {
                 name: `Happiness`,
                 value: `+${level * 20}`,
                 isPositive: true
+            });
+        }
+
+        if (this.policies.high_end_product.level > 0) {
+            const level = this.policies.high_end_product.level;
+            policyEffects.push({
+                name: `Sales Output`,
+                value: `+${level * 100}%`,
+                isPositive: true
+            });
+            policyEffects.push({
+                name: `Sales Penalty`,
+                value: `-${level * 1}`,
+                isPositive: false
             });
         }
 

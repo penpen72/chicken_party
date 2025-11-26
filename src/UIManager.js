@@ -399,7 +399,12 @@ class UIManager {
             this.policyUpgradeBtn.innerHTML = 'Maxed Out';
         } else {
             this.policyUpgradeBtn.disabled = false;
-            this.policyUpgradeBtn.innerHTML = `Upgrade ($<span id="policy-cost">${nextCost}</span>)`;
+            let costText = `$${nextCost}`;
+            if (policy.techCost) {
+                const nextTechCost = policy.techCost * (policy.level + 1);
+                costText += ` + ${nextTechCost} Tech`;
+            }
+            this.policyUpgradeBtn.innerHTML = `Upgrade (${costText})`;
         }
 
         // Stats/Effects
@@ -413,6 +418,9 @@ class UIManager {
             statsHtml += `<div class="stat-row"><span class="stat-label">Happiness:</span><span class="stat-value">+${(policy.level + 1) * 20} (Next Level)</span></div>`;
         } else if (policyKey === 'expansion') {
             statsHtml += `<div class="stat-row"><span class="stat-label">Office Size:</span><span class="stat-value">+2 Ring (Next Level)</span></div>`;
+        } else if (policyKey === 'high_end_product') {
+            statsHtml += `<div class="stat-row"><span class="stat-label">Sales Output:</span><span class="stat-value">+${(policy.level + 1) * 100}% (Next Level)</span></div>`;
+            statsHtml += `<div class="stat-row"><span class="stat-label">Sales Penalty:</span><span class="stat-value">-${(policy.level + 1) * 1} (Next Level)</span></div>`;
         }
 
         this.policyStats.innerHTML = statsHtml;
