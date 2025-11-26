@@ -105,5 +105,5 @@ Policies are global upgrades that can be leveled up (Max Level 5).
 *   **Trade-off**: Massive revenue potential but significantly hurts company culture.
 
 ### 3.4 Office Expansion
-*   **Base Cost**: $10000
+*   **Base Cost**: $100000 + 5000 Tech Points
 *   **Effect**: Expands the office grid size by +2x2 per level.
