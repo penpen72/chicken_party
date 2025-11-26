@@ -90,7 +90,7 @@ Policies are global upgrades that can be leveled up (Max Level 5).
 *   **Trade-off**: High productivity at the cost of rapid burnout.
 
 ### 3.2 Competitive Salary
-*   **Base Cost**: $2000
+*   **Base Cost**: $2000 + 1000 Tech Points
 *   **Effect**:
     *   **+50% Salary Cost** (Global).
     *   **Happiness Locked at 100** (Max).
