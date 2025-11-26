@@ -35,6 +35,7 @@ Policies act as global levers to shift the balance.
 | :--- | :--- | :--- | :--- |
 | **Responsibility System** | 1-5 | **R&D Output +20%**, **Happiness -1** per level. | $5k base |
 | **Competitive Salary** | 1-5 | **Salary +50%**, **Happiness +20** per level. | $2k base |
+| **High-End Product Line** | 1-5 | **Sales Output +100%**, **Sales Penalty +1** per level. | $1M + 100k Tech base |
 | **Expansion** | 0-5 | Increases Grid Size (Starts 6x6, +2 Ring/Level). | $10k base |
 
 ## Unit Balance

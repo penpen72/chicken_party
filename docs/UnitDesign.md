@@ -68,9 +68,9 @@ Facilities are buildings that modify the environment. They do not have a daily s
 *   **Cost**: $1000
 *   **Size**: 2x1
 *   **Effect**:
-    *   **Buff**: **+20% Efficiency** to all units in range.
+    *   **Buff**: **+20% Efficiency** to all Staff units (**Engineers, Sales, PM**) in range.
     *   **Range**: 4x3 area (Left/Right/Top/Bottom 1 cell).
-*   **Strategy**: Powerful booster for high-density clusters.
+*   **Strategy**: Powerful booster for high-density clusters of staff.
 
 ### 2.4 Plant
 *   **Cost**: $50
@@ -97,6 +97,13 @@ Policies are global upgrades that can be leveled up (Max Level 5).
     *   **+10% Crit Chance** per level (Boosts output).
 *   **Trade-off**: Extremely expensive but guarantees maximum efficiency and no Zombies.
 
-### 3.3 Office Expansion
+### 3.3 High-End Product Line
+*   **Base Cost**: $1,000,000 + 100,000 Tech Points
+*   **Effect**:
+    *   **+100% Sales Output** per level.
+    *   **+1 Sales Happiness Penalty** per level (Base -1 becomes -2 at Lv1).
+*   **Trade-off**: Massive revenue potential but significantly hurts company culture.
+
+### 3.4 Office Expansion
 *   **Base Cost**: $10000
 *   **Effect**: Expands the office grid size by +2x2 per level.
