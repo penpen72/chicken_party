@@ -188,10 +188,16 @@ class UIManager {
         }
     }
 
-    showEventModal(title, desc, onClose) {
+    showEventModal(title, desc, onClose, eventType = 'neutral') {
         this.modalTitle.textContent = title;
-        this.modalDesc.innerText = desc; // innerText for newlines
+        this.modalDesc.innerHTML = desc; // Use innerHTML for rich content
         this.onModalClose = onClose;
+
+        // Reset classes
+        const content = this.modal.querySelector('.modal-content');
+        content.classList.remove('party-theme', 'departure-theme', 'neutral-theme');
+        content.classList.add(`${eventType}-theme`);
+
         this.modal.classList.remove('hidden');
     }
 

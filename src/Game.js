@@ -292,36 +292,120 @@ class Game {
         this.soundManager.playEventSound();
 
         // Annual Settlement
-        // Check 1: Profit
-        const isProfitable = this.annualProfit > 0;
-        // Check 2: Happiness
-        const isHappy = this.resourceManager.kpis.welfare >= 50;
-        // Check 3: KPI Growth (Tech) - Simplified to just Tech > 0 or something?
-        // Design says: "KPI Zero Growth -> HP -1"
-        // Let's assume "Tech" is the KPI.
+        // 1. Calculate Turnover Chance
+        // Formula: 5% Base + (200 - Happiness) / 2
+        // Happiness 200 -> 5%
+        // Happiness 100 -> 55%
+        // Happiness 0 -> 100% (Capped at 100%)
+        const happiness = this.resourceManager.kpis.welfare;
+        let turnoverChance = 5 + (200 - happiness) / 2;
+        turnoverChance = Math.max(5, Math.min(100, turnoverChance));
+
+        // 2. Roll for Departure
+        // Max 1 person leaves per year
+        const roll = Math.random() * 100;
+        const isDeparture = roll < turnoverChance;
 
         let hpLoss = 0;
-        let reasons = [];
+        let reason = "";
+        let eventType = "party"; // 'party' or 'departure'
 
-        if (!isProfitable) {
-            hpLoss++;
-            reasons.push("Annual Loss");
-        }
-        if (!isHappy) {
-            hpLoss++;
-            reasons.push("Low Happiness");
+        if (isDeparture) {
+            hpLoss = 1;
+            this.resourceManager.kpis.hp -= hpLoss;
+            eventType = "departure";
+
+            // Select Reason
+            // If Happiness is very low (< 50), higher chance of "Outrageous" reasons?
+            // Or just random mix. Let's make it fun.
+            const realisticReasons = [
+                "Found a better offer at a rival tech giant.",
+                "Burnout from too many late-night deployments.",
+                "Family reasons: Moving back to hometown to inherit a farm.",
+                "Decided to pivot to AI farming.",
+                "Poached by a headhunter for double the salary.",
+                "Tired of the free snacks, wanted real food."
+            ];
+
+            const outrageousReasons = [
+                "Won the lottery and bought a private island.",
+                "Abducted by aliens who needed a backend engineer.",
+                "Decided to become a monk to find inner peace (and escape bugs).",
+                "Went to find the One Piece to pay off student loans.",
+                "Claimed to be a time traveler and had to return to 2077.",
+                "Ascended to a higher plane of existence during a code review."
+            ];
+
+            // 5% chance of outrageous reason, or higher if happiness is low?
+            // Let's make it 10% chance generally for fun.
+            if (Math.random() < 0.1) {
+                reason = outrageousReasons[Math.floor(Math.random() * outrageousReasons.length)];
+            } else {
+                reason = realisticReasons[Math.floor(Math.random() * realisticReasons.length)];
+            }
+
+        } else {
+            // Chicken Party!
+            eventType = "party";
+            reason = "Everyone is happy! The team celebrates with a bucket of fried chicken.";
         }
 
-        // Apply HP Loss
-        this.resourceManager.kpis.hp -= hpLoss;
+        // 3. Prepare Yearly Summary
+        const profit = this.annualProfit;
+        const techGrowth = this.resourceManager.kpis.tech; // Current Stock? Or growth? 
+        // We don't track "Yearly Tech Growth" explicitly, let's just show current stock or maybe average happiness.
+
+        const summaryHtml = `
+            <div class="event-summary">
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Yearly Profit</div>
+                        <div class="stat-value ${profit >= 0 ? 'positive' : 'negative'}">
+                            ${profit >= 0 ? '+' : ''}$${Math.floor(profit)}
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">😊</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Avg Happiness</div>
+                        <div class="stat-value ${happiness >= 100 ? 'positive' : 'neutral'}">
+                            ${Math.floor(happiness)}
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💔</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Partners Left</div>
+                        <div class="stat-value highlight">
+                            ${this.resourceManager.kpis.hp}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="event-reason ${eventType}">
+                <div class="reason-icon">${isDeparture ? '👋' : '🍗'}</div>
+                <div class="reason-content">
+                    <div class="reason-title">${isDeparture ? 'Partner Left' : 'Chicken Party!'}</div>
+                    <div class="reason-text">${reason}</div>
+                </div>
+            </div>
+        `;
 
         // Reset Annual Stats
         this.annualProfit = 0;
 
         // Show Modal
+        // We need to update UIManager to handle HTML content or just pass text
+        // The current showEventModal uses innerText. We should update it to innerHTML or use a new method.
+        // For now, let's assume we will update UIManager to support HTML or just pass text if we can't.
+        // But the plan says "Update UI". So I will update UIManager next.
+
         this.uiManager.showEventModal(
-            `Chicken Party ${this.year}`,
-            `The partners have gathered.\n\nResult: ${hpLoss === 0 ? "Satisfied! No one left." : hpLoss + " Partner(s) left."}\nReasons: ${reasons.length > 0 ? reasons.join(", ") : "None"}\n\nRemaining Partners: ${this.resourceManager.kpis.hp}`,
+            `Year ${this.year} Report`,
+            summaryHtml, // Passing HTML now
             () => {
                 // On Close
                 this.year++;
@@ -332,7 +416,8 @@ class Game {
                 if (this.resourceManager.kpis.hp <= 0) {
                     this.triggerGameOver("All partners have abandoned the ship.");
                 }
-            }
+            },
+            eventType // Pass type for styling
         );
     }
 

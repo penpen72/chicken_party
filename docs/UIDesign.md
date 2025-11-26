@@ -52,12 +52,24 @@ Appears when clicking on an existing unit in the game world.
 *   **Description**: Unit role and behavior.
 *   **Live Stats**: Current performance, including active buffs/debuffs.
 
-## 5. Event Modal
+## 5. Event Modal (Yearly Settlement)
 A popup window that pauses the game for major events.
-*   **Chicken Party**: Annual performance review.
-    *   Shows result (Partners left or stayed).
-    *   Lists reasons for failure (Loss, Low Happiness).
-    *   "Continue" button to start the next year.
+
+### 5.1 Visual Style (New v1.1)
+*   **Glassmorphism**: Uses `backdrop-filter: blur(10px)` with semi-transparent backgrounds for a modern, premium feel.
+*   **Theming**: The modal changes color based on the event outcome:
+    *   **Party Theme (Green)**: Used when no partners leave. Features green gradients and confetti.
+    *   **Departure Theme (Red)**: Used when a partner leaves. Features red gradients.
+*   **Stat Cards**: Key metrics (Profit, Happiness, Departures) are displayed in individual cards with icons instead of a text list.
+
+### 5.2 Content
+*   **Header**: "Year X Report".
+*   **Summary**: Grid of stat cards showing yearly performance.
+*   **Reason Box**:
+    *   **Icon**: Animated icon (🍗 or 👋).
+    *   **Title**: "Chicken Party!" or "Partner Left".
+    *   **Description**: Narrative reason for the event.
+*   **Action**: "Continue" button to start the next year.
 
 ## 6. Mobile Adaptations
 *   **Responsive Layout**: UI elements scale for smaller screens.
