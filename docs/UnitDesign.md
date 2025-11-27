@@ -83,14 +83,14 @@ Facilities are buildings that modify the environment. They do not have a daily s
 Policies are global upgrades that can be leveled up (Max Level 5).
 
 ### 3.1 Responsibility System
-*   **Base Cost**: $5000
+*   **Base Cost**: $5,000
 *   **Effect**:
     *   **+30% R&D Output** per level for Engineers.
     *   **-5 Happiness** per level (Global).
 *   **Trade-off**: High productivity at the cost of rapid burnout.
 
 ### 3.2 Competitive Salary
-*   **Base Cost**: $2000 + 1000 Tech Points
+*   **Base Cost**: $2,000 + 1,000 Tech Points
 *   **Effect**:
     *   **+50% Salary Cost** (Global).
     *   **Happiness Locked at 100** (Max).
@@ -98,12 +98,12 @@ Policies are global upgrades that can be leveled up (Max Level 5).
 *   **Trade-off**: Extremely expensive but guarantees maximum efficiency and no Zombies.
 
 ### 3.3 High-End Product Line
-*   **Base Cost**: $1,000,000 + 100,000 Tech Points
+*   **Base Cost**: $500,000 + 100,000 Tech Points
 *   **Effect**:
     *   **+100% Sales Output** per level.
     *   **+1 Sales Happiness Penalty** per level (Base -1 becomes -2 at Lv1).
 *   **Trade-off**: Massive revenue potential but significantly hurts company culture.
 
 ### 3.4 Office Expansion
-*   **Base Cost**: $100000 + 5000 Tech Points
+*   **Base Cost**: $50,000 + 5,000 Tech Points
 *   **Effect**: Expands the office grid size by +2x2 per level.
