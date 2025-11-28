@@ -1,0 +1,26 @@
+:root {
+  --bg-color: #1a1a1a;
+  --text-color: #ffffff;
+  --accent-color: #ffcc00;
+  --danger-color: #ff4444;
+  --success-color: #44ff44;
+  --bottom-ui-height: 220px;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --bottom-ui-height: 240px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --bottom-ui-height: 260px;
+  }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+  :root {
+    --bottom-ui-height: 180px;
+  }
+}

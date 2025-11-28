@@ -75,3 +75,22 @@ A popup window that pauses the game for major events.
 *   **Responsive Layout**: UI elements scale for smaller screens.
 *   **Backdrop**: Darkens the background when panels (Unit Info) are open to focus attention.
 *   **Touch Controls**: Tap to select/build instead of click.
+
+## 7. Technical Architecture (CSS)
+As of v1.2, the CSS architecture has been modularized for better maintainability.
+
+### 7.1 Directory Structure
+All styles are located in `src/css/`.
+
+### 7.2 Modules
+*   **variables.css**: Global CSS variables (`:root`) for colors, spacing, and theme constants.
+*   **base.css**: Reset styles, global typography, and body/html settings.
+*   **layout.css**: Core layout structure (`#app`, `#top-bar`, `#bottom-bar`).
+*   **components.css**: Reusable UI components (Buttons, Progress Bars, Toggles).
+*   **ui-panels.css**: Specific styles for game panels (Unit Info, Policy Info, Purchase Preview).
+*   **dashboard.css**: Styles for the Company Dashboard.
+*   **modals.css**: Styles for the Event Modal and backdrops.
+*   **animations.css**: Keyframes and animation utility classes.
+
+### 7.3 Usage
+These files are imported individually in `index.html` in the specific order listed above to ensure correct cascading of styles.
