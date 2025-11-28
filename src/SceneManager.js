@@ -473,24 +473,46 @@ class SceneManager {
             }
         });
     }
-    resize(gridWidth, gridHeight) {
+    resize(gridWidth, gridHeight, units) {
         this.gridWidth = gridWidth;
         this.gridHeight = gridHeight;
 
         // Remove old floor and grid helper
         this.scene.remove(this.floor);
-        // Find grid helper (it doesn't have a specific property reference other than being in scene)
-        // We can find it by type or store it.
-        // In createGridVisuals, we didn't store it on 'this'. Let's fix that or find it.
-        // Actually, let's just clear and recreate.
-
-        // Better: Store gridHelper in constructor/createGridVisuals
-        // Since I can't easily modify constructor without reloading file, I'll find it.
         const helpers = this.scene.children.filter(c => c.type === 'GridHelper');
         helpers.forEach(h => this.scene.remove(h));
 
         // Recreate visuals
         this.createGridVisuals();
+
+        // Update Unit Positions
+        if (units) {
+            units.forEach(unit => {
+                const mesh = this.unitMeshes.get(unit.id);
+                if (mesh) {
+                    const pos = this.gridToWorld(unit.x, unit.y);
+                    const w = unit.width || 1;
+                    const h = unit.height || 1;
+                    const offsetX = (w - 1) * this.cellSize / 2;
+                    const offsetZ = (h - 1) * this.cellSize / 2;
+
+                    mesh.position.x = pos.x + offsetX;
+                    mesh.position.z = pos.z + offsetZ;
+                    // Y should remain correct (based on cellSize which doesn't change)
+                }
+
+                // Update Floor Overlay
+                const overlay = this.floorOverlays.get(unit.id);
+                if (overlay) {
+                    // Remove and re-add to ensure correct position
+                    this.scene.remove(overlay);
+                    overlay.geometry.dispose();
+                    overlay.material.dispose();
+                    this.floorOverlays.delete(unit.id);
+                    this.addFloorOverlay(unit);
+                }
+            });
+        }
 
         // Update Camera?
         // Camera sees the whole scene, might need to zoom out if grid gets huge.

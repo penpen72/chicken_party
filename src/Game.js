@@ -447,7 +447,7 @@ class Game {
         const newSize = baseSize + (newLevel * 2);
 
         this.gridManager.resize(newSize, newSize);
-        this.sceneManager.resize(newSize, newSize);
+        this.sceneManager.resize(newSize, newSize, this.gridManager.getAllUnits());
 
         this.soundManager.playBuildSound(); // Or a special sound
         // Maybe show a notification?
