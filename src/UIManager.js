@@ -215,8 +215,9 @@ class UIManager {
         if (def.stats.rd > 0) statsHtml += `<div class="stat-row"><span class="stat-label">R&D Power:</span><span class="stat-value">+${def.stats.rd}</span></div>`;
         if (def.stats.sales > 0) {
             statsHtml += `<div class="stat-row"><span class="stat-label">Sales Power:</span><span class="stat-value">+${def.stats.sales}</span></div>`;
-            // Show revenue potential (Sales Power * $2 per unit)
-            const maxRevenue = def.stats.sales * 2;
+            // Show revenue potential (Sales Power * Unit Price)
+            const unitPrice = this.game.resourceManager.CONSTANTS.UNIT_PRICE;
+            const maxRevenue = def.stats.sales * unitPrice;
             statsHtml += `<div class="stat-row"><span class="stat-label">Max Revenue:</span><span class="stat-value">+$${maxRevenue}/day (uses Tech)</span></div>`;
         }
         if (def.stats.rep > 0) statsHtml += `<div class="stat-row"><span class="stat-label">Reputation:</span><span class="stat-value">+${def.stats.rep}</span></div>`;
@@ -266,8 +267,9 @@ class UIManager {
         }
         if (def.stats.sales > 0) {
             statsHtml += `<div class="stat-row"><span class="stat-label">📢 Sales Power:</span><span class="stat-value">+${def.stats.sales}/day</span></div>`;
-            // Show revenue potential (Sales Power * $2 per unit)
-            const maxRevenue = def.stats.sales * 2;
+            // Show revenue potential (Sales Power * Unit Price)
+            const unitPrice = this.game.resourceManager.CONSTANTS.UNIT_PRICE;
+            const maxRevenue = def.stats.sales * unitPrice;
             statsHtml += `<div class="stat-row"><span class="stat-label">💰 Max Revenue:</span><span class="stat-value">+$${maxRevenue}/day (uses Tech)</span></div>`;
         }
         if (def.stats.rep > 0) {
@@ -417,16 +419,16 @@ class UIManager {
         let statsHtml = '';
 
         if (policyKey === 'responsibility_system') {
-            statsHtml += `<div class="stat-row"><span class="stat-label">R&D Output:</span><span class="stat-value">+${(policy.level + 1) * 20}% (Next Level)</span></div>`;
-            statsHtml += `<div class="stat-row"><span class="stat-label">Happiness:</span><span class="stat-value">-${(policy.level + 1) * 10} (Next Level)</span></div>`;
+            statsHtml += `<div class="stat-row"><span class="stat-label">R&D Output:</span><span class="stat-value">+${(policy.level + 1) * (policy.effects.output * 100)}% (Next Level)</span></div>`;
+            statsHtml += `<div class="stat-row"><span class="stat-label">Happiness:</span><span class="stat-value">${(policy.level + 1) * policy.effects.happiness} (Next Level)</span></div>`;
         } else if (policyKey === 'competitive_salary') {
-            statsHtml += `<div class="stat-row"><span class="stat-label">Salary:</span><span class="stat-value">+${(policy.level + 1) * 50}% (Next Level)</span></div>`;
-            statsHtml += `<div class="stat-row"><span class="stat-label">Happiness:</span><span class="stat-value">+${(policy.level + 1) * 20} (Next Level)</span></div>`;
+            statsHtml += `<div class="stat-row"><span class="stat-label">Salary:</span><span class="stat-value">+${(policy.level + 1) * (policy.effects.salary * 100)}% (Next Level)</span></div>`;
+            statsHtml += `<div class="stat-row"><span class="stat-label">Happiness:</span><span class="stat-value">+${(policy.level + 1) * policy.effects.happiness} (Next Level)</span></div>`;
         } else if (policyKey === 'expansion') {
-            statsHtml += `<div class="stat-row"><span class="stat-label">Office Size:</span><span class="stat-value">+2 Ring (Next Level)</span></div>`;
+            statsHtml += `<div class="stat-row"><span class="stat-label">Office Size:</span><span class="stat-value">+${policy.effects.ring} Ring (Next Level)</span></div>`;
         } else if (policyKey === 'high_end_product') {
-            statsHtml += `<div class="stat-row"><span class="stat-label">Sales Output:</span><span class="stat-value">+${(policy.level + 1) * 100}% (Next Level)</span></div>`;
-            statsHtml += `<div class="stat-row"><span class="stat-label">Sales Penalty:</span><span class="stat-value">-${(policy.level + 1) * 1} (Next Level)</span></div>`;
+            statsHtml += `<div class="stat-row"><span class="stat-label">Sales Output:</span><span class="stat-value">+${(policy.level + 1) * (policy.effects.sales * 100)}% (Next Level)</span></div>`;
+            statsHtml += `<div class="stat-row"><span class="stat-label">Sales Penalty:</span><span class="stat-value">-${(policy.level + 1) * policy.effects.penalty} (Next Level)</span></div>`;
         }
 
         this.policyStats.innerHTML = statsHtml;
@@ -499,6 +501,7 @@ class UIManager {
      */
     updateDashboard() {
         const summary = this.game.resourceManager.getDailySummary();
+        const unitPrice = this.game.resourceManager.CONSTANTS.UNIT_PRICE;
 
         // Daily Impact Section - Primary metrics
         this.dashboardEconomics.innerHTML = `

@@ -10,6 +10,10 @@ class ResourceManager {
             hp: 5 // Partner Bond
         };
 
+        this.CONSTANTS = {
+            UNIT_PRICE: 2
+        };
+
         this.flows = {
             cash: 0,
             rd_power: 0,
@@ -29,7 +33,11 @@ class ResourceManager {
                 name: "Responsibility System",
                 shortName: "責任制",
                 icon: "📋",
-                description: "Output +20%/Level. Happiness -10/Level."
+                description: "Output +20%/Level. Happiness -10/Level.",
+                effects: {
+                    output: 0.20,
+                    happiness: -10
+                }
             },
             competitive_salary: {
                 id: 'competitive_salary',
@@ -40,7 +48,11 @@ class ResourceManager {
                 name: "Competitive Salary",
                 shortName: "高薪",
                 icon: "💰",
-                description: "Salary +50%/Level. Happiness +20/Level."
+                description: "Salary +50%/Level. Happiness +20/Level.",
+                effects: {
+                    salary: 0.50,
+                    happiness: 20
+                }
             },
             high_end_product: {
                 id: 'high_end_product',
@@ -51,7 +63,11 @@ class ResourceManager {
                 name: "High-End Product Line",
                 shortName: "高階產線",
                 icon: "💎",
-                description: "Sales +100%/Level. Sales Penalty +1/Level."
+                description: "Sales +100%/Level. Sales Penalty +1/Level.",
+                effects: {
+                    sales: 1.0,
+                    penalty: 1
+                }
             },
             expansion: {
                 id: 'expansion',
@@ -62,7 +78,10 @@ class ResourceManager {
                 name: "Office Expansion",
                 shortName: "擴建",
                 icon: "📐",
-                description: "Expand office space (+2 Ring)."
+                description: "Expand office space (+2 Ring).",
+                effects: {
+                    ring: 2
+                }
             }
         };
 
@@ -106,7 +125,11 @@ class ResourceManager {
                 cost: 500,
                 width: 1, height: 1,
                 stats: { cost: 10, rd: 0, sales: 0, welfare: 0, rep: 0, type: 'facility' },
-                effectRange: 1 // 3x3
+                effectRange: 1, // 3x3
+                buffs: {
+                    type: 'rd',
+                    value: 0.50 // +50%
+                }
             },
             pantry: {
                 name: "Pantry",
@@ -115,7 +138,11 @@ class ResourceManager {
                 cost: 300,
                 width: 2, height: 2,
                 stats: { cost: 5, rd: 0, sales: 0, welfare: 5, rep: 0, type: 'facility' },
-                effectRange: 2 // 5x5 (Range 2)
+                effectRange: 2, // 5x5 (Range 2)
+                buffs: {
+                    type: 'happiness',
+                    value: 5
+                }
             },
             conference_room: {
                 name: "Conference Room",
@@ -124,7 +151,11 @@ class ResourceManager {
                 cost: 1000,
                 width: 2, height: 1,
                 stats: { cost: 0, rd: 0, sales: 0, welfare: 0, rep: 0, type: 'facility' },
-                effectRange: { left: 1, right: 1, top: 1, bottom: 1 } // 4x3 area
+                effectRange: { left: 1, right: 1, top: 1, bottom: 1 }, // 4x3 area
+                buffs: {
+                    type: 'efficiency',
+                    value: 0.20 // +20%
+                }
             },
             plant: {
                 name: "Plant",
@@ -133,7 +164,11 @@ class ResourceManager {
                 cost: 50,
                 width: 1, height: 1,
                 stats: { cost: 0, rd: 0, sales: 0, welfare: 2, rep: 0, type: 'facility' },
-                effectRange: 1
+                effectRange: 1,
+                buffs: {
+                    type: 'happiness',
+                    value: 2
+                }
             }
         };
 
@@ -222,7 +257,7 @@ class ResourceManager {
                 let penalty = Math.abs(def.stats.welfare);
                 // Apply High-End Product Line Penalty to Sales
                 if (unit.type === 'marketing' && this.policies.high_end_product.level > 0) {
-                    penalty += 1 * this.policies.high_end_product.level;
+                    penalty += this.policies.high_end_product.effects.penalty * this.policies.high_end_product.level;
                 }
                 globalHappinessPenalty += penalty;
             }
@@ -235,22 +270,22 @@ class ResourceManager {
 
         // Responsibility System: Output +20%/Level, Happiness -1/Level
         if (this.policies.responsibility_system.level > 0) {
-            policyOutputMod += 0.2 * this.policies.responsibility_system.level;
-            policyHappinessMod -= 10 * this.policies.responsibility_system.level;
+            policyOutputMod += this.policies.responsibility_system.effects.output * this.policies.responsibility_system.level;
+            policyHappinessMod += this.policies.responsibility_system.effects.happiness * this.policies.responsibility_system.level;
         }
 
         // Competitive Salary: Salary +50%/Level, Happiness +20/Level
         if (this.policies.competitive_salary.level > 0) {
-            policySalaryMod += 0.5 * this.policies.competitive_salary.level;
-            policyHappinessMod += 20 * this.policies.competitive_salary.level;
+            policySalaryMod += this.policies.competitive_salary.effects.salary * this.policies.competitive_salary.level;
+            policyHappinessMod += this.policies.competitive_salary.effects.happiness * this.policies.competitive_salary.level;
         }
 
         // High-End Product Line: Sales Output +100%/Level, Sales Penalty +1/Level
         let policySalesOutputMod = 1.0;
         let policySalesPenaltyMod = 0;
         if (this.policies.high_end_product.level > 0) {
-            policySalesOutputMod += 1.0 * this.policies.high_end_product.level;
-            policySalesPenaltyMod += 1 * this.policies.high_end_product.level;
+            policySalesOutputMod += this.policies.high_end_product.effects.sales * this.policies.high_end_product.level;
+            policySalesPenaltyMod += this.policies.high_end_product.effects.penalty * this.policies.high_end_product.level;
         }
 
         // 3. Process Each Unit
@@ -328,11 +363,11 @@ class ResourceManager {
                     // Pantry/Plant only affect Engineers
                     if (isEngineer) {
                         if (hasPantryBuff) {
-                            localBuffs += 5;
+                            localBuffs += this.unitDefinitions.pantry.buffs.value;
                             unit.runtime.buffs.push('pantry');
                         }
                         if (hasPlantBuff) {
-                            localBuffs += 2;
+                            localBuffs += this.unitDefinitions.plant.buffs.value;
                             unit.runtime.buffs.push('plant');
                         }
                     }
@@ -344,8 +379,15 @@ class ResourceManager {
                     // R&D is produced by Engineers. So effectively Engineers.
                     if (hasServerBuff) {
                         unit.runtime.buffs.push('server');
-                        // Server Rack Noise Penalty (-5)
-                        localBuffs -= 5;
+                        // Server Rack Noise Penalty (-5) - Wait, is this a buff or penalty?
+                        // The definition says: "Noise (-5 Happiness)".
+                        // But we didn't add a 'penalty' field to buffs.
+                        // Let's assume the noise is part of the base stats or handled here.
+                        // For now, let's keep the hardcoded -5 as it seems to be a side effect, not the main buff.
+                        // Or we can add it to unitDefinitions.server.stats.welfare if it's global? No, it's local.
+                        // Let's stick to the plan: Refactor Buffs.
+                        // The +50% R&D is the buff. The -5 Happiness is a side effect.
+                        localBuffs -= 5; // Keeping this hardcoded for now as it's a specific mechanic not generic buff
                     }
                 }
 
@@ -365,7 +407,7 @@ class ResourceManager {
 
                 // Conference Room Buff: +20% Efficiency (Applies to all Staff)
                 if (unit.runtime.buffs && unit.runtime.buffs.includes('conference')) {
-                    unit.runtime.efficiency *= 1.2;
+                    unit.runtime.efficiency *= (1 + this.unitDefinitions.conference_room.buffs.value);
                 }
 
                 // Zombie Check (Efficiency < 10% -> < 0.1)
@@ -398,7 +440,7 @@ class ResourceManager {
                     let techMod = 1.0;
                     // Server Buff: +50%
                     if (unit.runtime.buffs && unit.runtime.buffs.includes('server')) {
-                        techMod = 1.5;
+                        techMod = (1 + this.unitDefinitions.server.buffs.value);
                     }
 
                     // Policy Output Mod (Responsibility System)
@@ -474,7 +516,7 @@ class ResourceManager {
         this.kpis.tech = Math.max(0, this.kpis.tech);
 
         // 5. Calculate Financials
-        const unitPrice = 2; // $2 per unit
+        const unitPrice = this.CONSTANTS.UNIT_PRICE; // $2 per unit
         const revenue = actualSales * unitPrice;
         const expense = this.flows.totalSalary * deltaTime;
 
@@ -493,7 +535,7 @@ class ResourceManager {
      */
     getDailySummary() {
         // Calculate max revenue (sales power * $2 per unit)
-        const unitPrice = 2;
+        const unitPrice = this.CONSTANTS.UNIT_PRICE;
         const maxRevenue = this.flows.sales_power * unitPrice;
 
         // Collect active policy effects
@@ -503,12 +545,12 @@ class ResourceManager {
             const level = this.policies.responsibility_system.level;
             policyEffects.push({
                 name: `Eng. Output`,
-                value: `+${level * 20}%`,
+                value: `+${level * (this.policies.responsibility_system.effects.output * 100)}%`,
                 isPositive: true
             });
             policyEffects.push({
                 name: `Global Happiness`,
-                value: `-${level * 10}`,
+                value: `${level * this.policies.responsibility_system.effects.happiness}`,
                 isPositive: false
             });
         }
@@ -517,12 +559,12 @@ class ResourceManager {
             const level = this.policies.competitive_salary.level;
             policyEffects.push({
                 name: `Eng. Salary`,
-                value: `+${level * 50}%`,
+                value: `+${level * (this.policies.competitive_salary.effects.salary * 100)}%`,
                 isPositive: false
             });
             policyEffects.push({
                 name: `Happiness`,
-                value: `+${level * 20}`,
+                value: `+${level * this.policies.competitive_salary.effects.happiness}`,
                 isPositive: true
             });
         }
@@ -531,12 +573,12 @@ class ResourceManager {
             const level = this.policies.high_end_product.level;
             policyEffects.push({
                 name: `Sales Output`,
-                value: `+${level * 100}%`,
+                value: `+${level * (this.policies.high_end_product.effects.sales * 100)}%`,
                 isPositive: true
             });
             policyEffects.push({
                 name: `Sales Penalty`,
-                value: `-${level * 1}`,
+                value: `-${level * this.policies.high_end_product.effects.penalty}`,
                 isPositive: false
             });
         }
@@ -544,7 +586,7 @@ class ResourceManager {
         if (this.policies.expansion.level > 0) {
             policyEffects.push({
                 name: `Office Size`,
-                value: `+${this.policies.expansion.level * 2} Ring`,
+                value: `+${this.policies.expansion.level * this.policies.expansion.effects.ring} Ring`,
                 isPositive: true
             });
         }
