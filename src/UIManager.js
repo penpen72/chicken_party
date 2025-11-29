@@ -418,7 +418,7 @@ class UIManager {
 
         if (policyKey === 'responsibility_system') {
             statsHtml += `<div class="stat-row"><span class="stat-label">R&D Output:</span><span class="stat-value">+${(policy.level + 1) * 20}% (Next Level)</span></div>`;
-            statsHtml += `<div class="stat-row"><span class="stat-label">Happiness:</span><span class="stat-value">-${(policy.level + 1) * 1} (Next Level)</span></div>`;
+            statsHtml += `<div class="stat-row"><span class="stat-label">Happiness:</span><span class="stat-value">-${(policy.level + 1) * 10} (Next Level)</span></div>`;
         } else if (policyKey === 'competitive_salary') {
             statsHtml += `<div class="stat-row"><span class="stat-label">Salary:</span><span class="stat-value">+${(policy.level + 1) * 50}% (Next Level)</span></div>`;
             statsHtml += `<div class="stat-row"><span class="stat-label">Happiness:</span><span class="stat-value">+${(policy.level + 1) * 20} (Next Level)</span></div>`;
