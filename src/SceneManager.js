@@ -426,7 +426,7 @@ class SceneManager {
         }
     }
 
-    updateUnitVisuals(units) {
+    updateUnitVisuals(units, showBuffs = true) {
         units.forEach(unit => {
             const mesh = this.unitMeshes.get(unit.id);
             if (mesh && unit.runtime) {
@@ -445,10 +445,11 @@ class SceneManager {
                 const hasBuffs = unit.runtime.buffs && unit.runtime.buffs.length > 0;
                 const marker = mesh.userData.buffMarker;
 
-                if (!hasBuffs && marker) {
+                // If buffs are disabled or unit has no buffs, remove marker
+                if ((!showBuffs || !hasBuffs) && marker) {
                     mesh.remove(marker);
                     mesh.userData.buffMarker = null;
-                } else if (hasBuffs) {
+                } else if (showBuffs && hasBuffs) {
                     const buffType = unit.runtime.buffs.includes('pantry')
                         ? 'pantry'
                         : unit.runtime.buffs.includes('server')

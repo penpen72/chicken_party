@@ -102,7 +102,7 @@ class ResourceManager {
             server: {
                 name: "Server Rack",
                 icon: "💾",
-                description: "Boosts neighbors' R&D (+50%). Costs Daily Maintenance.",
+                description: "Boosts neighbors' R&D (+50%). Noise (-5 Happiness).",
                 cost: 500,
                 width: 1, height: 1,
                 stats: { cost: 10, rd: 0, sales: 0, welfare: 0, rep: 0, type: 'facility' },
@@ -111,10 +111,10 @@ class ResourceManager {
             pantry: {
                 name: "Pantry",
                 icon: "☕",
-                description: "Restores Happiness (+4) to Engineers.",
+                description: "Restores Happiness (+5) to Engineers.",
                 cost: 300,
                 width: 2, height: 2,
-                stats: { cost: 5, rd: 0, sales: 0, welfare: 4, rep: 0, type: 'facility' },
+                stats: { cost: 5, rd: 0, sales: 0, welfare: 5, rep: 0, type: 'facility' },
                 effectRange: 2 // 5x5 (Range 2)
             },
             conference_room: {
@@ -132,7 +132,8 @@ class ResourceManager {
                 description: "Small Happiness boost (+2) to Engineers.",
                 cost: 50,
                 width: 1, height: 1,
-                stats: { cost: 0, rd: 0, sales: 0, welfare: 2, rep: 0, type: 'facility' }
+                stats: { cost: 0, rd: 0, sales: 0, welfare: 2, rep: 0, type: 'facility' },
+                effectRange: 1
             }
         };
 
@@ -327,7 +328,7 @@ class ResourceManager {
                     // Pantry/Plant only affect Engineers
                     if (isEngineer) {
                         if (hasPantryBuff) {
-                            localBuffs += 4;
+                            localBuffs += 5;
                             unit.runtime.buffs.push('pantry');
                         }
                         if (hasPlantBuff) {
@@ -341,7 +342,11 @@ class ResourceManager {
 
                     // Server affects Engineers (and maybe others? Code said "Boosts neighbors' R&D")
                     // R&D is produced by Engineers. So effectively Engineers.
-                    if (hasServerBuff) unit.runtime.buffs.push('server');
+                    if (hasServerBuff) {
+                        unit.runtime.buffs.push('server');
+                        // Server Rack Noise Penalty (-5)
+                        localBuffs -= 5;
+                    }
                 }
 
                 // Final Happiness

@@ -91,7 +91,7 @@ class Game {
 
         // Update Unit Visuals (Zombie Mode)
         const units = this.gridManager.getAllUnits();
-        this.sceneManager.updateUnitVisuals(units);
+        this.sceneManager.updateUnitVisuals(units, this.settings.showBuffs);
 
         // 5. Update UI
         this.uiManager.updateUI(this.resourceManager.kpis, this.year, Math.floor(this.day), this.resourceManager.kpis.hp);
