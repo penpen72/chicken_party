@@ -188,9 +188,16 @@ class UIManager {
         }
     }
 
-    showEventModal(title, desc, onClose, eventType = 'neutral') {
+    showEventModal(title, desc, onClose, eventType = 'neutral', eventImage = null) {
         this.modalTitle.textContent = title;
-        this.modalDesc.innerHTML = desc; // Use innerHTML for rich content
+
+        let contentHtml = '';
+        if (eventImage) {
+            contentHtml += `<div class="event-image-container"><img src="${eventImage}" class="event-image" alt="Event Image"></div>`;
+        }
+        contentHtml += desc;
+
+        this.modalDesc.innerHTML = contentHtml; // Use innerHTML for rich content
         this.onModalClose = onClose;
 
         // Reset classes

@@ -182,3 +182,24 @@
     line-height: 1.5;
     font-style: italic;
 }
+/* Event Image */
+.event-image-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.event-image {
+    width: 200px;
+    height: 200px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.event-image:hover {
+    transform: scale(1.05);
+}
+

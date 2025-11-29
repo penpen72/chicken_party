@@ -318,36 +318,78 @@ class Game {
             // Select Reason
             // If Happiness is very low (< 50), higher chance of "Outrageous" reasons?
             // Or just random mix. Let's make it fun.
-            const realisticReasons = [
-                "Found a better offer at a rival tech giant.",
-                "Burnout from too many late-night deployments.",
-                "Family reasons: Moving back to hometown to inherit a farm.",
-                "Decided to pivot to AI farming.",
-                "Poached by a headhunter for double the salary.",
-                "Tired of the free snacks, wanted real food."
+            // Expanded Departure Reasons with Categories and Images
+            const departureEvents = [
+                // 1. Career Growth
+                {
+                    category: "Career Growth",
+                    image: "assets/images/events/career_growth.png",
+                    reasons: [
+                        "I received an offer from a competitor that pays 50% more. I can't say no.",
+                        "I feel like I've stopped growing here. I need a new challenge.",
+                        "A headhunter reached out with a Senior Architect role. It's the next step for me.",
+                        "I'm starting my own startup. Thanks for the inspiration!"
+                    ]
+                },
+                // 2. Burnout
+                {
+                    category: "Burnout",
+                    image: "assets/images/events/burnout.png",
+                    reasons: [
+                        "I'm burnt out. I haven't seen the sun in three weeks.",
+                        "The crunch culture here is too much. I need to prioritize my health.",
+                        "I can't deal with the spaghetti code anymore. It's haunting my dreams.",
+                        "I feel unappreciated. My contributions are always overlooked."
+                    ]
+                },
+                // 3. Personal Life
+                {
+                    category: "Personal Life",
+                    image: "assets/images/events/personal_life.png",
+                    reasons: [
+                        "My partner got a job in another city, so we're moving.",
+                        "I'm taking a sabbatical to hike the Pacific Crest Trail.",
+                        "I'm going back to school to get my PhD in AI.",
+                        "I'm retiring early to become a full-time streamer."
+                    ]
+                },
+                // 4. Outrageous
+                {
+                    category: "Outrageous",
+                    image: "assets/images/events/outrageous.png",
+                    reasons: [
+                        "I was summoned by a secret society of coders to save the internet.",
+                        "My cat learned to code and we're launching a rival app.",
+                        "I realized I'm actually a simulation and I'm trying to break out.",
+                        "A time traveler told me this company collapses in 2026. Sorry!"
+                    ]
+                }
             ];
 
-            const outrageousReasons = [
-                "Won the lottery and bought a private island.",
-                "Abducted by aliens who needed a backend engineer.",
-                "Decided to become a monk to find inner peace (and escape bugs).",
-                "Went to find the One Piece to pay off student loans.",
-                "Claimed to be a time traveler and had to return to 2077.",
-                "Ascended to a higher plane of existence during a code review."
-            ];
+            // Select Category based on randomness or logic
+            // For now, equal chance for all, maybe slightly less for Outrageous?
+            let selectedCategory;
+            const rand = Math.random();
+            if (rand < 0.15) selectedCategory = departureEvents[3]; // 15% Outrageous
+            else if (rand < 0.45) selectedCategory = departureEvents[2]; // 30% Personal
+            else if (rand < 0.75) selectedCategory = departureEvents[0]; // 30% Career
+            else selectedCategory = departureEvents[1]; // 25% Burnout (Default/Remaining)
 
-            // 5% chance of outrageous reason, or higher if happiness is low?
-            // Let's make it 10% chance generally for fun.
-            if (Math.random() < 0.1) {
-                reason = outrageousReasons[Math.floor(Math.random() * outrageousReasons.length)];
-            } else {
-                reason = realisticReasons[Math.floor(Math.random() * realisticReasons.length)];
-            }
+            // Select specific reason
+            reason = selectedCategory.reasons[Math.floor(Math.random() * selectedCategory.reasons.length)];
+            // Pass image to event logic (we need to pass this to showEventModal)
+            var eventImage = selectedCategory.image;
+
 
         } else {
             // Chicken Party!
             eventType = "party";
             reason = "Everyone is happy! The team celebrates with a bucket of fried chicken.";
+            // Default party image (we might need one, or just use an icon for now)
+            // For now let's use the 'outrageous' one or just null if we don't have a specific party image yet?
+            // The user only asked for departure images. Let's use a placeholder or existing icon logic if null.
+            var eventImage = null;
+
         }
 
         // 3. Prepare Yearly Summary
@@ -417,7 +459,8 @@ class Game {
                     this.triggerGameOver("All partners have abandoned the ship.");
                 }
             },
-            eventType // Pass type for styling
+            eventType, // Pass type for styling
+            eventImage // Pass image URL
         );
     }
 
