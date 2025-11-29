@@ -29,7 +29,7 @@ class ResourceManager {
                 name: "Responsibility System",
                 shortName: "責任制",
                 icon: "📋",
-                description: "Output +20%/Level. Happiness -1/Level."
+                description: "Output +20%/Level. Happiness -10/Level."
             },
             competitive_salary: {
                 id: 'competitive_salary',
@@ -236,7 +236,7 @@ class ResourceManager {
         // Responsibility System: Output +20%/Level, Happiness -1/Level
         if (this.policies.responsibility_system.level > 0) {
             policyOutputMod += 0.2 * this.policies.responsibility_system.level;
-            policyHappinessMod -= 1 * this.policies.responsibility_system.level;
+            policyHappinessMod -= 10 * this.policies.responsibility_system.level;
         }
 
         // Competitive Salary: Salary +50%/Level, Happiness +20/Level
@@ -508,7 +508,7 @@ class ResourceManager {
             });
             policyEffects.push({
                 name: `Global Happiness`,
-                value: `-${level * 1}`,
+                value: `-${level * 10}`,
                 isPositive: false
             });
         }

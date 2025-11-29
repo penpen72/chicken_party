@@ -86,7 +86,7 @@ Policies are global upgrades that can be leveled up (Max Level 5).
 *   **Base Cost**: $5,000
 *   **Effect**:
     *   **+30% R&D Output** per level for Engineers.
-    *   **-5 Happiness** per level (Global).
+    *   **-10 Happiness** per level (Global).
 *   **Trade-off**: High productivity at the cost of rapid burnout.
 
 ### 3.2 Competitive Salary
