@@ -58,7 +58,7 @@ class ResourceManager {
                 id: 'high_end_product',
                 level: 0,
                 maxLevel: 5,
-                baseCost: 500000,
+                baseCost: 100000,
                 techCost: 100000,
                 name: "High-End Product Line",
                 shortName: "高階產線",

@@ -98,7 +98,7 @@ Policies are global upgrades that can be leveled up (Max Level 5).
 *   **Trade-off**: Extremely expensive but guarantees maximum efficiency and no Zombies.
 
 ### 3.3 High-End Product Line
-*   **Base Cost**: $500,000 + 100,000 Tech Points
+*   **Base Cost**: $100,000 + 100,000 Tech Points
 *   **Effect**:
     *   **+100% Sales Output** per level.
     *   **+1 Sales Happiness Penalty** per level (Base -1 becomes -2 at Lv1).
