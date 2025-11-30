@@ -4,6 +4,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    white-space: nowrap;
 }
 
 .progress-container {
@@ -338,23 +339,6 @@
         min-width: 70px;
         min-height: 70px;
     }
-
-    .btn-icon {
-        font-size: 1.5rem;
-    }
-
-    .btn-name {
-        font-size: 0.75rem;
-    }
-
-    justify-content: center;
-    gap: 10px;
-    font-size: 1rem;
-}
-
-#delete-mode-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(255, 68, 68, 0.4);
 }
 
 #delete-mode-btn.active {
