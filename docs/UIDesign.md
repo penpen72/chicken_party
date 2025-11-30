@@ -17,7 +17,9 @@ Located at the top of the screen, providing essential metrics.
 *   **Resources**:
     *   **Cash**: 💰 Current funds.
     *   **Tech Stock**: 🔬 Current inventory of R&D products.
-    *   **Sales Power**: 📢 Daily sales capacity.
+    *   **Daily Net Profit**: 📈 Real-time profit/loss indicator (Revenue - Expenses).
+        *   **Format**: `+$X/d` (profit, green) or `-$X/d` (loss, red) or `$0/d` (break-even, white).
+        *   **Purpose**: Provides immediate feedback on financial performance.
     *   **Happiness**: ❤️ Average employee welfare (0-100).
 *   **Toggles**:
     *   **Production Text** (💸): Toggle floating text for income/expenses.
