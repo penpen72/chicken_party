@@ -94,7 +94,7 @@ class Game {
         this.sceneManager.updateUnitVisuals(units, this.settings.showBuffs);
 
         // 5. Update UI
-        this.uiManager.updateUI(this.resourceManager.kpis, this.year, Math.floor(this.day), this.resourceManager.kpis.hp);
+        this.uiManager.updateUI(this.resourceManager.kpis, this.year, Math.floor(this.day), this.resourceManager.kpis.hp, this.resourceManager.flows.cash);
 
         // Check Game Over
         if (this.resourceManager.kpis.hp <= 0) {

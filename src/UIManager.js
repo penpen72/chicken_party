@@ -9,7 +9,7 @@ class UIManager {
         this.cashDisplay = document.getElementById('cash-display');
         this.hpDisplay = document.getElementById('hp-display');
         this.rdDisplay = document.getElementById('rd-display');
-        this.salesDisplay = document.getElementById('sales-display');
+        this.profitDisplay = document.getElementById('profit-display');
         this.welfareDisplay = document.getElementById('welfare-display');
 
         this.modal = document.getElementById('event-modal');
@@ -167,7 +167,7 @@ class UIManager {
         }
     }
 
-    updateUI(kpis, year, day, hp) {
+    updateUI(kpis, year, day, hp, profitValue) {
         this.yearDisplay.textContent = year;
         this.dayDisplay.textContent = `Day ${day}`;
         const progress = (day / 365) * 100;
@@ -176,9 +176,27 @@ class UIManager {
         this.cashDisplay.textContent = Math.floor(kpis.cash);
         if (this.hpDisplay) this.hpDisplay.textContent = hp;
 
-        // Update R&D (Stock) and Sales (Capacity)
-        if (this.rdDisplay) this.rdDisplay.textContent = Math.floor(kpis.tech); // Display Stock
-        if (this.salesDisplay) this.salesDisplay.textContent = Math.floor(kpis.sales_power);
+        // Update R&D (Stock)
+        if (this.rdDisplay) this.rdDisplay.textContent = Math.floor(kpis.tech);
+
+        // Update Profit Display
+        if (this.profitDisplay) {
+            const profit = Math.floor(profitValue);
+            let displayText;
+            if (profit > 0) {
+                displayText = `+$${profit}/d`;
+            } else if (profit < 0) {
+                displayText = `-$${Math.abs(profit)}/d`;
+            } else {
+                displayText = `$0/d`;
+            }
+            this.profitDisplay.textContent = displayText;
+
+            // Color coding
+            this.profitDisplay.classList.remove('positive', 'negative');
+            if (profit > 0) this.profitDisplay.classList.add('positive');
+            else if (profit < 0) this.profitDisplay.classList.add('negative');
+        }
 
         this.welfareDisplay.textContent = Math.floor(kpis.welfare);
 
