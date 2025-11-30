@@ -30,8 +30,16 @@ class Game {
         // Settings
         this.settings = {
             showProduction: true,
+            showProduction: true,
             showBuffs: true
         };
+
+        // Touch State
+        this.touchStartDist = 0;
+        this.baseZoom = 1.0;
+        this.isPinching = false;
+        this.lastTouchX = 0;
+        this.lastTouchY = 0;
     }
 
     start() {
@@ -48,6 +56,12 @@ class Game {
         // Bind Inputs
         window.addEventListener('mousedown', (e) => this.onMouseDown(e));
         window.addEventListener('mousemove', (e) => this.onMouseMove(e));
+
+        // Touch Events
+        const canvas = document.getElementById('game-canvas');
+        canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
+        canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+        canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
     }
 
     loop(timestamp) {
@@ -494,5 +508,88 @@ class Game {
 
         this.soundManager.playBuildSound(); // Or a special sound
         // Maybe show a notification?
+    }
+
+    // Touch Handlers
+    handleTouchStart(e) {
+        if (e.touches.length === 1) {
+            // Single touch - treat as mouse move/down
+            const touch = e.touches[0];
+            this.lastTouchX = touch.clientX;
+            this.lastTouchY = touch.clientY;
+
+            // Simulate mouse move for highlight
+            this.onMouseMove({
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                target: e.target,
+                id: e.target.id
+            });
+
+            this.isPinching = false;
+        } else if (e.touches.length === 2) {
+            // Pinch start
+            this.isPinching = true;
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            this.touchStartDist = Math.sqrt(dx * dx + dy * dy);
+            this.baseZoom = this.sceneManager.zoom;
+            e.preventDefault(); // Prevent default browser zoom
+        }
+    }
+
+    handleTouchMove(e) {
+        if (e.touches.length === 1 && !this.isPinching) {
+            // Single touch drag/move
+            const touch = e.touches[0];
+            this.onMouseMove({
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                target: e.target,
+                id: e.target.id
+            });
+            // Prevent scrolling while interacting with canvas
+            if (e.target.id === 'game-canvas') {
+                e.preventDefault();
+            }
+        } else if (e.touches.length === 2) {
+            // Pinch zoom
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (this.touchStartDist > 0) {
+                const scale = dist / this.touchStartDist;
+                const newZoom = this.baseZoom * scale;
+                this.sceneManager.setZoom(newZoom);
+            }
+            e.preventDefault();
+        }
+    }
+
+    handleTouchEnd(e) {
+        if (this.isPinching) {
+            if (e.touches.length < 2) {
+                this.isPinching = false;
+            }
+        } else {
+            // If it was a tap (short duration, little movement), treat as click
+            // For now, just trigger click on end if it was a single touch
+            // But we need to distinguish between drag and tap. 
+            // Let's just call onMouseDown which handles logic.
+            // Note: onMouseDown expects a mouse event.
+
+            if (e.changedTouches.length > 0) {
+                const touch = e.changedTouches[0];
+                // Simple tap detection could be added here (time based)
+                // For now, direct mapping
+                this.onMouseDown({
+                    clientX: touch.clientX,
+                    clientY: touch.clientY,
+                    target: e.target,
+                    id: e.target.id
+                });
+            }
+        }
     }
 }

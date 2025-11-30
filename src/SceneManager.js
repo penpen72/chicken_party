@@ -16,7 +16,11 @@ class SceneManager {
         const d = 20;
         this.camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 1000);
         this.camera.position.set(20, 20, 20); // Isometric angle
+        this.camera.position.set(20, 20, 20); // Isometric angle
         this.camera.lookAt(0, 0, 0);
+        this.zoom = 1.0;
+        this.minZoom = 0.5;
+        this.maxZoom = 2.0;
 
         // Renderer
         this.renderer = new THREE.WebGLRenderer({ canvas: this.container, antialias: true });
@@ -336,11 +340,14 @@ class SceneManager {
         this.renderer.render(this.scene, this.camera);
     }
 
-    onWindowResize() {
-        this.width = this.container.clientWidth;
-        this.height = this.container.clientHeight;
+    setZoom(scale) {
+        this.zoom = Math.max(this.minZoom, Math.min(this.maxZoom, scale));
+        this.updateCameraProjection();
+    }
+
+    updateCameraProjection() {
         const aspect = this.width / this.height;
-        const d = 20;
+        const d = 20 / this.zoom; // Adjust view size based on zoom
 
         this.camera.left = -d * aspect;
         this.camera.right = d * aspect;
@@ -348,7 +355,13 @@ class SceneManager {
         this.camera.bottom = -d;
 
         this.camera.updateProjectionMatrix();
+    }
+
+    onWindowResize() {
+        this.width = this.container.clientWidth;
+        this.height = this.container.clientHeight;
         this.renderer.setSize(this.width, this.height);
+        this.updateCameraProjection();
     }
 
     getGridPositionFromMouse(clientX, clientY) {
